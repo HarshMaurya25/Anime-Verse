@@ -1,0 +1,94 @@
+services:
+  api-gateway:
+    image: magician05/api-gatway:latest
+    container_name: api-gateway
+    ports:
+      - "55555:11111"
+    networks:
+      - anime-verse-network
+
+  auth-database:
+    image: postgres:16
+    container_name: auth-database
+    environment:
+      POSTGRES_DB: anime-verse
+      POSTGRES_USER: anime-verse
+      POSTGRES_PASSWORD: anime-verse
+    volumes:
+      - auth-db:/var/lib/postgresql/data
+    networks:
+      - anime-verse-network
+
+  auth-service:
+    image: magician05/authenication-service:latest
+    container_name: auth-service
+    depends_on:
+      - auth-database
+      - kafka
+      - auth-redis
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-database:5432/anime-verse
+      SPRING_DATASOURCE_USERNAME: anime-verse
+      SPRING_DATASOURCE_PASSWORD: anime-verse
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create
+      SECURITY_JWT_SECRET: AVx9KQp7mT3ZrE2Wn8YFJHcL5B0uD4aS6GkPqR1oI
+
+      SPRING_REDIS_HOST: auth-redis
+      SPRING_REDIS_PORT: 6379
+
+    networks:
+      - anime-verse-network
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "55556:8080"
+
+    restart: always
+    networks:
+      - anime-verse-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - anime-verse-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    networks:
+      - anime-verse-network
+
+  auth-redis:
+    image: redis:7.2-alpine
+    container_name: auth-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - auth-redis:/data
+    networks:
+      - anime-verse-network
+
+networks:
+  anime-verse-network:
+    driver: bridge
+
+volumes:
+  auth-db:
+  auth-redis:

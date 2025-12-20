@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: auth-service
+
+  project:
+    name: Anime-Verse
+
+  datasource:
+    url: #url
+    username: #username
+    password: #password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  data:
+    redis:
+      port: 6379
+      host: auth-redis
+
+security:
+  jwt:
+    secret: #key
+    expiration: 900000 # 15 minutes
+    refresh-expiration: 604800000 # 7 days
+
+server:
+  port: 11112
