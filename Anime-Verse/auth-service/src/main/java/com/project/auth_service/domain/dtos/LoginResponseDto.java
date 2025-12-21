@@ -1,16 +1,21 @@
 package com.project.auth_service.domain.dtos;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
+import java.util.UUID;
 
-@Setter
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
-@ToString
-public class TokenVerificationResponse {
+public class LoginResponseDto {
+    private UUID id;
+    private String username;
+    private String email;
     private String AccessToken;
     private Date TimeStampAccessToken;
     private String RefreshToken;

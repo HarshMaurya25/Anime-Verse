@@ -4,14 +4,12 @@ import lombok.*;
 
 import java.util.Date;
 
-@Setter
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TokenInfo {
-    private String id;
-    private String roles;
-    private Date expirationAt;
-    private String tokenType;
+public class TokenResponseDto {
+    private String token;
+    private Date expireAt;
 }

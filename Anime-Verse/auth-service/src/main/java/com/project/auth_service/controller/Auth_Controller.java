@@ -1,19 +1,12 @@
 package com.project.auth_service.controller;
 
-import com.project.auth_service.domain.dtos.SignUpRequestDto;
-import com.project.auth_service.domain.dtos.SignUpResponseDto;
-import com.project.auth_service.domain.dtos.TokenVerificationRequest;
-import com.project.auth_service.domain.dtos.TokenVerificationResponse;
+import com.project.auth_service.domain.dtos.*;
 import com.project.auth_service.service.AuthControllerService;
 import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
@@ -32,11 +25,27 @@ public class Auth_Controller {
     }
 
     @PostMapping("/verify-code")
-    public ResponseEntity<TokenVerificationResponse> verifyToken(
-            @Validated @RequestBody TokenVerificationRequest requestDto
+    public ResponseEntity<TokenVerificationResponseDto> verifyToken(
+            @Validated @RequestBody TokenVerificationRequestDto requestDto
             ){
-        TokenVerificationResponse response = authControllerService.verifyCode(requestDto);
+        TokenVerificationResponseDto response = authControllerService.verifyCode(requestDto);
         return new ResponseEntity<>(response , HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponseDto> loginUser(
+            @Validated @RequestBody LoginRequestDto requestDto
+            ){
+        LoginResponseDto responseDto = authControllerService.logIn(requestDto.getIdentifier() , requestDto.getPassword());
+        return new ResponseEntity<>(responseDto , HttpStatus.OK);
+    }
+
+    @GetMapping("/access/token")
+    public ResponseEntity<TokenResponseDto> getAccessToken(
+            @Validated @RequestBody AccessTokenRequestDto requestDto
+    ){
+        TokenResponseDto responseDto = authControllerService.getAccessToken(requestDto.getToken() , requestDto.getId());
+        return new ResponseEntity<>(responseDto , HttpStatus.OK);
     }
 
 }

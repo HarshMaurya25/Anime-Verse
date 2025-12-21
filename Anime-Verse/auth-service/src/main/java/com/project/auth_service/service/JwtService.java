@@ -1,7 +1,9 @@
 package com.project.auth_service.service;
 
 import com.project.auth_service.domain.dtos.TokenInfo;
-import com.project.auth_service.domain.dtos.TokenVerificationResponse;
+import com.project.auth_service.domain.dtos.TokenResponseDto;
+import com.project.auth_service.domain.dtos.TokenVerificationResponseDto;
+import com.project.auth_service.domain.enums.TokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -27,9 +29,10 @@ public class JwtService {
     @Value("${SECURITY_JWT_SECRET}")
     private String secret;
 
-    public String generateToken(UUID id , String role , long expireTime){
+    public String generateToken(UUID id , String role , long expireTime , String type){
         Map<String , String> claims = new HashMap<>();
         claims.put("role" , role);
+        claims.put("type" , type);
 
         return Jwts.builder()
                 .claims(claims)
@@ -40,13 +43,13 @@ public class JwtService {
                 .compact();
     }
 
-    public TokenVerificationResponse getTokens(UUID id , String role){
-        String AccessToken = createAccessToken(id , role);
+    public TokenVerificationResponseDto getTokens(UUID id , String role){
+        String AccessToken = createAccessToken(id , role).getToken();
         Date TimeStampAccessToken = new Date(System.currentTimeMillis() + expirationMsAccess);
         String RefreshToken = createRefreshToken(id , role);
         Date TimeStampRefreshToken = new Date(System.currentTimeMillis() + expirationMsRefresh);
 
-        return TokenVerificationResponse
+        return TokenVerificationResponseDto
                 .builder()
                 .AccessToken(AccessToken)
                 .TimeStampAccessToken(TimeStampAccessToken)
@@ -56,12 +59,19 @@ public class JwtService {
 
     }
 
-    public String createAccessToken(UUID id , String role){
-        return generateToken(id , role , expirationMsAccess);
+    public TokenResponseDto createAccessToken(UUID id , String role){
+       String token =  generateToken(id , role , expirationMsAccess , TokenType.ACCESS.toString());
+       Date expireAt = new Date(System.currentTimeMillis() + expirationMsAccess);
+
+       return TokenResponseDto
+               .builder()
+               .token(token)
+               .expireAt(expireAt)
+               .build();
     }
 
-    public String createRefreshToken(UUID id , String role){
-        return generateToken(id , role , expirationMsRefresh);
+    public String createRefreshToken(UUID id , String role ){
+        return generateToken(id , role , expirationMsRefresh , TokenType.REFRESH.toString());
     }
 
     public SecretKey key(){
@@ -82,8 +92,10 @@ public class JwtService {
         tokenInfo.setId(claims.getSubject());
         tokenInfo.setRoles(claims.get("role", String.class));
         tokenInfo.setExpirationAt(claims.getExpiration());
+        tokenInfo.setTokenType(claims.get("type" , String.class));
 
         return tokenInfo;
+
     }
 
     public boolean isTokenValid(String token) {

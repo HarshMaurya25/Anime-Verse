@@ -6,6 +6,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -88,6 +90,31 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error , HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<List<ApiError>> handleBadCredentialsException(BadCredentialsException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Bad Credential")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error , HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<List<ApiError>> handleDisabledException(DisabledException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Disable User")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error , HttpStatus.UNAUTHORIZED);
+    }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<List<ApiError>> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
@@ -116,6 +143,19 @@ public class GlobalExceptionHandler {
                 ApiError.builder()
                         .keyError(exception.getMessage())
                         .valueError("Error Occured")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ExpireOrWrongRefreshTokenException.class)
+    public ResponseEntity<List<ApiError>> handleExpireOrWrongRefreshTokenException(ExpireOrWrongRefreshTokenException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Expire O rWrong Refresh Token")
                         .timeStamp(LocalDateTime.now())
                         .build()
         );

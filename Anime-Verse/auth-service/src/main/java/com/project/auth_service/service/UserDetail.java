@@ -14,7 +14,7 @@ import java.util.Set;
 
 @AllArgsConstructor
 @Builder
-public class userDetail implements UserDetails {
+public class UserDetail implements UserDetails {
 
     private final UserProfile user;
 
@@ -24,6 +24,10 @@ public class userDetail implements UserDetails {
         authoritySet.addAll(RolePermissionMapping.getAuthoritiesForRole(user.getRoles()));
         authoritySet.add(new SimpleGrantedAuthority("ROLE_"+user.getRoles().toString()));
         return authoritySet;
+    }
+
+    public UserProfile getUser() {
+        return user;
     }
 
     @Override

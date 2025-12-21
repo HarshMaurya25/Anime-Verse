@@ -25,7 +25,7 @@ public class UserDetailService implements UserDetailsService {
             if(userProfile == null){
                 throw new UsernameNotFoundException(username);
             }
-            return new userDetail(userProfile);
+            return new UserDetail(userProfile);
 
         } catch (Exception e) {
             log.error("User Detail Service : {} " ,e.getMessage());
@@ -38,7 +38,7 @@ public class UserDetailService implements UserDetailsService {
             UserProfile userProfile = userRepo.findById(userId)
                     .orElseThrow(() -> new UsernameNotFoundException(userId.toString()));
 
-            return new userDetail(userProfile);
+            return new UserDetail(userProfile);
 
         } catch (Exception e) {
             log.error("User Detail Service : {} " ,e.getMessage());

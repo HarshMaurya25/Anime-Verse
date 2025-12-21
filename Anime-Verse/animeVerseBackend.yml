@@ -86,7 +86,8 @@ services:
     container_name: auth-redis
     command: redis-server --appendonly yes
     volumes:
-      - auth-redis:/data
+      - auth_redis_data:/data
+
     networks:
       - anime-verse-network
 
@@ -96,4 +97,4 @@ networks:
 
 volumes:
   auth-db:
-  auth-redis:
+  auth_redis_data:

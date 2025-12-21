@@ -10,13 +10,10 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TokenVerificationRequest {
+public class TokenVerificationRequestDto {
 
     @NonNull
     private UUID id;
-
-    @NotBlank
-    private String role;
 
     @NonNull
     private int code;
