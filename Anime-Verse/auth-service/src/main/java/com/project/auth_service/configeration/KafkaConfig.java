@@ -9,6 +9,6 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic createMyTopic(){
-        return new NewTopic("VerificationCodeNotification" , 1 , (short) 1);
+        return new NewTopic("AuthenicationNotification" , 1 , (short) 1);
     }
 }

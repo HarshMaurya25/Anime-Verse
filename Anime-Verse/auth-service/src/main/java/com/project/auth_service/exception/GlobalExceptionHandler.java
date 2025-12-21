@@ -77,6 +77,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error , HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ResponseEntity<List<ApiError>> handleAuthenticationCredentialsNotFoundException(AuthenticationCredentialsNotFoundException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Authentication Credentials Not Found")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error , HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<List<ApiError>> handleJwtException(JwtException exception) {
         List<ApiError> error = List.of(
@@ -195,6 +208,19 @@ public class GlobalExceptionHandler {
                 ApiError.builder()
                         .keyError(exception.getMessage())
                         .valueError("Invalid Verification Code")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(EmailAlreadySendException.class)
+    public ResponseEntity<List<ApiError>> handleEmailAlreadySendException(EmailAlreadySendException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Email Already Send")
                         .timeStamp(LocalDateTime.now())
                         .build()
         );

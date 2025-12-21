@@ -14,6 +14,7 @@ public class SignUpResponseDto {
     private UUID id;
     private String username;
     private String email;
+    private boolean emailSend;
 
 }
 

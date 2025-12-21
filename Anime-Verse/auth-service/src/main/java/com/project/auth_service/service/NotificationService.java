@@ -15,7 +15,7 @@ public class NotificationService {
     private final KafkaTemplate kafkaTemplate;
 
     public void createEmailVerificationNotification(String email , String username , Integer verificationCode){
-        String topic = "VerificationCodeNotification";
+        String topic = "AuthenicationNotification";
         NotificationDto requestDto = NotificationDto
                 .builder()
                 .type(EventTypeNotification.EMAIL_VERIFICATION.toString())
@@ -25,6 +25,7 @@ public class NotificationService {
                 .build();
         try {
             kafkaTemplate.send(topic , requestDto);
+            log.info("Verification Email is Send {} on {}" , username ,email);
         }catch (Exception e){
             log.error(e.getMessage());
         }

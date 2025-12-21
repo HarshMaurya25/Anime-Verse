@@ -3,6 +3,7 @@ package com.project.notification_service.service;
 import com.project.notification_service.dto.NotificationDto;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.MalformedInputException;
 
+import static java.rmi.server.LogStream.log;
+
+@Slf4j
 @Service
 public class EmailValidationSender {
 
@@ -44,6 +48,7 @@ public class EmailValidationSender {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
+            log.info("Verification Email is Send {} on {}" , codeDto.getUsername() ,codeDto.getEmail());
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }

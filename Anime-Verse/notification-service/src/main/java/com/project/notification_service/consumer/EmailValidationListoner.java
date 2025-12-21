@@ -13,7 +13,7 @@ public class EmailValidationListoner {
 
     private final EmailValidationSender emailsender;
 
-    @KafkaListener(topics = "VerificationCodeNotification")
+    @KafkaListener(topics = "AuthenicationNotification")
     public void EmailListoner(NotificationDto codeDto){
         if(codeDto.getType().equals(EventTypeNotification.EMAIL_VERIFICATION.toString())){
             emailsender.sendEmail(codeDto);

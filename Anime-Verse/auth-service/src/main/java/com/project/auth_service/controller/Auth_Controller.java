@@ -48,4 +48,17 @@ public class Auth_Controller {
         return new ResponseEntity<>(responseDto , HttpStatus.OK);
     }
 
+    @GetMapping("/password/email")
+    public ResponseEntity<Boolean> passwordResetEmail(@RequestParam String identifier){
+        authControllerService.passwordResetEmail(identifier);
+        return ResponseEntity.ok(true);
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<LoginResponseDto> passwordReset(
+            @RequestBody PasswordResetLoginDto dto
+    ){
+        return new ResponseEntity<>(authControllerService.passwordResetLogin(dto) , HttpStatus.OK);
+    }
+
 }
