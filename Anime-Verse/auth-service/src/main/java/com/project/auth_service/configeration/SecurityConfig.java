@@ -15,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Configuration
@@ -24,6 +25,7 @@ public class SecurityConfig {
 
     private final HandlerExceptionResolver handlerExceptionResolver;
     private final UserDetailService userDetailService;
+    private final JwtFilterChain jwtFilterChain;
 
     @Bean
     public SecurityFilterChain securityConfigeration(HttpSecurity httpSecurity) {
@@ -41,6 +43,7 @@ public class SecurityConfig {
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
+                .addFilterBefore(jwtFilterChain , UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exceptionConfig ->
                         exceptionConfig.accessDeniedHandler((request, response, accessDeniedException) ->
                                 handlerExceptionResolver.resolveException(request, response, null, accessDeniedException)

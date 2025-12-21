@@ -37,6 +37,7 @@ services:
 
       SPRING_REDIS_HOST: auth-redis
       SPRING_REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
     networks:
       - anime-verse-network
@@ -59,6 +60,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     networks:
       - anime-verse-network
+    ports:
+      - 2181:2181
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -75,6 +78,8 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     networks:
       - anime-verse-network
+    ports:
+      - 9092:9092
 
   auth-redis:
     image: redis:7.2-alpine

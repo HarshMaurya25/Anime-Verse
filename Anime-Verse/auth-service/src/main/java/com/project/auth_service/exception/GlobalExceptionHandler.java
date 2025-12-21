@@ -1,7 +1,7 @@
 package com.project.auth_service.exception;
 
-import com.project.auth_service.exception.customException.UserAlreadyExistsException;
-import com.project.auth_service.exception.customException.UsernameOrEmailAlreadyExistsException;
+import com.project.auth_service.exception.customException.*;
+import io.jsonwebtoken.JwtException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -61,6 +62,33 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error , HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<List<ApiError>> handleAuthenticationException(AuthenticationException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Authenication Failed")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error , HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<List<ApiError>> handleJwtException(JwtException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Invalid JWT token")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error , HttpStatus.UNAUTHORIZED);
+    }
+
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<List<ApiError>> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
         Throwable rootCause = exception.getRootCause();
@@ -80,6 +108,58 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<List<ApiError>> handleGenericException(RuntimeException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Error Occured")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<List<ApiError>> handleUserNotFoundException(UserNotFoundException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("User Not Found")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(VerificationCodeExpiredException.class)
+    public ResponseEntity<List<ApiError>> handleVerificationCodeExpiredException(VerificationCodeExpiredException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Verification Code Expired")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(InvalidVerificationCodeException.class)
+    public ResponseEntity<List<ApiError>> handleInvalidVerificationCodeException(InvalidVerificationCodeException exception) {
+        List<ApiError> error = List.of(
+                ApiError.builder()
+                        .keyError(exception.getMessage())
+                        .valueError("Invalid Verification Code")
+                        .timeStamp(LocalDateTime.now())
+                        .build()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
 

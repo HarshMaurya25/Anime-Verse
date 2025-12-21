@@ -2,8 +2,11 @@ package com.project.auth_service.controller;
 
 import com.project.auth_service.domain.dtos.SignUpRequestDto;
 import com.project.auth_service.domain.dtos.SignUpResponseDto;
+import com.project.auth_service.domain.dtos.TokenVerificationRequest;
+import com.project.auth_service.domain.dtos.TokenVerificationResponse;
 import com.project.auth_service.service.AuthControllerService;
 import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -26,6 +29,14 @@ public class Auth_Controller {
         SignUpResponseDto responseDto = authControllerService.signUpUser(requestDto);
 
         return new ResponseEntity<>(responseDto , HttpStatus.CREATED);
+    }
+
+    @PostMapping("/verify-code")
+    public ResponseEntity<TokenVerificationResponse> verifyToken(
+            @Validated @RequestBody TokenVerificationRequest requestDto
+            ){
+        TokenVerificationResponse response = authControllerService.verifyCode(requestDto);
+        return new ResponseEntity<>(response , HttpStatus.OK);
     }
 
 }
