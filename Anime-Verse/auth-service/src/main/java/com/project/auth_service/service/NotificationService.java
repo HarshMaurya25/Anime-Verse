@@ -14,14 +14,14 @@ public class NotificationService {
 
     private final KafkaTemplate kafkaTemplate;
 
-    public void createEmailVerificationNotification(String email , String username , Integer verificationCode){
+    public void createEmailVerificationNotification(String email , String username , String message , EventTypeNotification type){
         String topic = "AuthenicationNotification";
         NotificationDto requestDto = NotificationDto
                 .builder()
-                .type(EventTypeNotification.EMAIL_VERIFICATION.toString())
+                .type(type.toString())
                 .email(email)
                 .username(username)
-                .information(verificationCode.toString())
+                .information(message)
                 .build();
         try {
             kafkaTemplate.send(topic , requestDto);

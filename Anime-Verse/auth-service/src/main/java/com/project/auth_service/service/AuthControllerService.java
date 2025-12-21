@@ -3,6 +3,7 @@ package com.project.auth_service.service;
 import com.project.auth_service.domain.dtos.*;
 import com.project.auth_service.domain.entity.RefreshToken;
 import com.project.auth_service.domain.entity.UserProfile;
+import com.project.auth_service.domain.enums.EventTypeNotification;
 import com.project.auth_service.domain.enums.Roles;
 import com.project.auth_service.exception.customException.*;
 import com.project.auth_service.repository.RefreshTokenRepo;
@@ -59,7 +60,7 @@ public class AuthControllerService {
 
             userRepository.save(user);
 
-            int verificationNumber = emailVerification(user.getEmail() , user.getUsername(), user.getId() , SIGN_PREFIX);
+            int verificationNumber = emailVerification(user.getEmail() , user.getUsername(), user.getId() , SIGN_PREFIX , EventTypeNotification.EMAIL_VERIFICATION);
             log.info("User with username : {} and email : {} is Sign up and verification code : {}" , user.getUsername() , user.getEmail() , verificationNumber);
 
             return SignUpResponseDto.builder()
@@ -76,12 +77,12 @@ public class AuthControllerService {
     }
     /* ========================= EMAIL VERIFICATION ========================= */
 
-    public int emailVerification(String email, String username, UUID id, String prefix) {
+    public int emailVerification(String email, String username, UUID id, String prefix , EventTypeNotification typeNotification) {
         SecureRandom random = new SecureRandom();
-        int code = 100_000 + random.nextInt(900_000);
+        Integer code = 100_000 + random.nextInt(900_000);
 
         redisService.set(prefix + id, code, 300);
-        notificationService.createEmailVerificationNotification(email, username, code);
+        notificationService.createEmailVerificationNotification(email, username, code.toString() , typeNotification);
 
         return code;
     }
@@ -120,6 +121,11 @@ public class AuthControllerService {
                         .build()
         );
 
+        try{
+            notificationService.createEmailVerificationNotification(user.getEmail(), user.getUsername() , " " , EventTypeNotification.EMAIL_WELCOME);
+        }catch (Exception e){
+            log.error(e.getMessage());
+        }
         return tokens;
     }
 
@@ -178,7 +184,7 @@ public class AuthControllerService {
             throw new EmailAlreadySendException("password reset email");
         }
 
-        emailVerification(user.getEmail(), user.getUsername(), user.getId(), RESET_PREFIX);
+        emailVerification(user.getEmail(), user.getUsername(), user.getId(), RESET_PREFIX , EventTypeNotification.EMAIL_VERIFICATION);
     }
 
     @Transactional
