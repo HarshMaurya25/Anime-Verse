@@ -1,6 +1,7 @@
 package com.project.auth_service.service;
 
-import com.project.auth_service.domain.dtos.KafkaVerificationCodeDto;
+import com.project.auth_service.domain.dtos.NotificationDto;
+import com.project.auth_service.domain.enums.EventTypeNotification;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -15,11 +16,12 @@ public class NotificationService {
 
     public void createEmailVerificationNotification(String email , String username , Integer verificationCode){
         String topic = "VerificationCodeNotification";
-        KafkaVerificationCodeDto requestDto = KafkaVerificationCodeDto
+        NotificationDto requestDto = NotificationDto
                 .builder()
+                .type(EventTypeNotification.EMAIL_VERIFICATION.toString())
                 .email(email)
                 .username(username)
-                .verificationCode(verificationCode.toString())
+                .information(verificationCode.toString())
                 .build();
         try {
             kafkaTemplate.send(topic , requestDto);

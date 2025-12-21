@@ -40,7 +40,7 @@ public class Auth_Controller {
         return new ResponseEntity<>(responseDto , HttpStatus.OK);
     }
 
-    @GetMapping("/access/token")
+    @PostMapping("/access/token")
     public ResponseEntity<TokenResponseDto> getAccessToken(
             @Validated @RequestBody AccessTokenRequestDto requestDto
     ){

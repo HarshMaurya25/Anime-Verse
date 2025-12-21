@@ -32,7 +32,6 @@ public class JwtFilterChain extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String url = request.getRequestURI();
-        System.out.println(url);
 
         try {
             if (url.startsWith("/public") || url.contains("swagger-ui") || url.contains("/error")) {

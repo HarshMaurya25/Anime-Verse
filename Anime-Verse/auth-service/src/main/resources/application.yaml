@@ -30,7 +30,6 @@ spring:
       properties:
         spring.json.add.type.headers: false
 
-
 security:
   jwt:
     secret: #key
