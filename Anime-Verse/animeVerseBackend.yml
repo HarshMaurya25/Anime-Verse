@@ -106,8 +106,8 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
-      SPRING_MAIL_USERNAME: "harshmauryalaptop25@gmail.com"
-      SPRING_MAIL_PASSWORD: "hlef ixrx qncq kfmz"
+      SPRING_MAIL_USERNAME: "xxxxxxxx"
+      SPRING_MAIL_PASSWORD: "xxx xxx xxx xxx"
 
     networks:
       - anime-verse-network

@@ -33,8 +33,8 @@ spring:
 security:
   jwt:
     secret: #key
-    expiration: 900000 # 15 minutes
-    refresh-expiration: 604800000 # 7 days
+    expiration: 7200000 # 2 hours
+    refresh-expiration: 2592000000 # 30 days
 
 server:
   port: 11112
