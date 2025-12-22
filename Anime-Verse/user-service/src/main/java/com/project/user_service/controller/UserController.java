@@ -15,5 +15,4 @@ public class UserController {
             HttpServletRequest request) {
         return request.getHeader("User-Id");
     }
-
 }

@@ -2,6 +2,12 @@ spring:
   application:
     name: user-service
 
+  neo4j:
+    uri: neo4j+s://b0b5c523.databases.neo4j.io
+    authentication:
+      username: neo4j
+      password: aBlwsxqZGSVUpHnsPekh2xqZ5ajOmmYcXts1amtqO6o
+
 server:
   port: 11113
 
@@ -9,4 +15,4 @@ springdoc:
   swagger-ui:
     config-url: /api/user/v3/api-docs/swagger-config
     url: /api/user/v3/api-docs
-    path: /api/user/v3/swagger-ui
+    path: /v3/swagger-ui
