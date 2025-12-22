@@ -38,34 +38,34 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**",
+                                        "/v3/swagger-ui/**",
                                         "/swagger-ui.html",
-                                        "/error"
-                                ).permitAll()
-                                .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtFilterChain , UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(exceptionConfig ->
-                        exceptionConfig.accessDeniedHandler((request, response, accessDeniedException) ->
-                                handlerExceptionResolver.resolveException(request, response, null, accessDeniedException)
-                        ));
+                                        "/error")
+                                .permitAll()
+                                .anyRequest().authenticated())
+                .addFilterBefore(jwtFilterChain, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exceptionConfig -> exceptionConfig
+                        .accessDeniedHandler((request, response, accessDeniedException) -> handlerExceptionResolver
+                                .resolveException(request, response, null, accessDeniedException)));
 
         return httpSecurity.build();
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(){
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
     }
 }

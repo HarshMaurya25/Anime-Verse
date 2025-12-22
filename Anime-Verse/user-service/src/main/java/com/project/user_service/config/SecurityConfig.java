@@ -1,0 +1,36 @@
+package com.project.user_service.config;
+
+import jakarta.servlet.Filter;
+import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+
+@Configuration
+@AllArgsConstructor
+public class SecurityConfig {
+
+    private final HandlerExceptionResolver handlerExceptionResolver;
+    public final HeaderFilterChain headerFilterChain;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity){
+        return httpSecurity
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(headerFilterChain , UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exceptionConfig ->
+                        exceptionConfig.accessDeniedHandler((request, response, accessDeniedException) ->
+                                handlerExceptionResolver.resolveException(request, response, null, accessDeniedException)
+                        ))
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .build();
+    }
+
+}

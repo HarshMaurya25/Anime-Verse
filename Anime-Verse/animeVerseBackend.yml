@@ -2,8 +2,10 @@ services:
   api-gateway:
     image: magician05/api-gatway:latest
     container_name: api-gateway
+    environment:
+      SECURITY_JWT_SECRET: AVx9KQp7mT3ZrE2Wn8YFJHcL5B0uD4aS6GkPqR1oI
     ports:
-      - "55555:11111"
+      - "11111:11111"
     networks:
       - anime-verse-network
 
@@ -27,6 +29,9 @@ services:
       - kafka
       - auth-redis
 
+    ports:
+      - 11112:11112
+
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-database:5432/anime-verse
       SPRING_DATASOURCE_USERNAME: anime-verse
@@ -38,6 +43,8 @@ services:
       SPRING_REDIS_HOST: auth-redis
       SPRING_REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRINGDOC_SWAGGER_UI_CONFIG_URL: /api/auth/v3/api-docs/swagger-config
+      SPRINGDOC_SWAGGER_UI_URL: /api/auth/v3/api-docs
 
     networks:
       - anime-verse-network
@@ -46,7 +53,7 @@ services:
     image: adminer
     container_name: adminer
     ports:
-      - "55556:8080"
+      - "12312:8080"
 
     restart: always
     networks:
@@ -106,8 +113,20 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
-      SPRING_MAIL_USERNAME: "xxxxxx@gmail.com" # Gmail ID
-      SPRING_MAIL_PASSWORD: "xxx xxx xxx xxx" # Gmail App password
+      SPRING_MAIL_USERNAME: "harshmauryalaptop25@gmail.com" # Gmail ID
+      SPRING_MAIL_PASSWORD: "ixsv pkfj ofxv jlyy" # Gmail App password
+
+    networks:
+      - anime-verse-network
+
+  user-service:
+    image: magician05/user-service:latest
+    container_name: user-service
+
+    environment:
+      SPRING_REDIS_HOST: auth-redis
+      SPRING_REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
     networks:
       - anime-verse-network

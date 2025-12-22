@@ -1,6 +1,10 @@
 server:
   port: 11111
 
+security:
+  jwt:
+    secret: #key
+
 spring:
   application:
     name: api-gateway
@@ -9,7 +13,7 @@ spring:
     gateway:
       globalcors:
         corsConfigurations:
-          '[/**]':
+          "[/**]":
             allowedOrigins:
               - http://localhost:5173
             allowedMethods:
@@ -23,7 +27,7 @@ spring:
             allowCredentials: true
 
       server:
-        webmvc:
+        webflux:
           routes:
             - id: authentication-service-route
               uri: http://auth-service:11112
@@ -32,8 +36,17 @@ spring:
               filters:
                 - StripPrefix=2
 
-            - id: auth-service-swagger
-              uri: http://auth-service:11112
+            - id: user-service-swagger
+              uri: http://user-service:11113
               predicates:
-                - Path=/v3/api-docs/**
+                - Path=/api/user/v3/**
+              filters:
+                - StripPrefix=2
 
+            - id: user-service
+              uri: http://user-service:11113
+              predicates:
+                - Path=/api/user/**
+              filters:
+                - StripPrefix=2
+                - JwtValidation
