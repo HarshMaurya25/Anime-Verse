@@ -18,19 +18,22 @@ import java.util.UUID;
 @Component
 public class HeaderFilterChain extends OncePerRequestFilter {
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         String id = request.getHeader("User-Id");
         String role = request.getHeader("User-Role");
 
-        if(id == null || role == null){
-            filterChain.doFilter(request , response);
+        if (id == null || role == null) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
         UserDetail userDetail = new UserDetail(UUID.fromString(id), Roles.valueOf(role));
 
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetail , null , userDetail.getAuthorities());
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetail,
+                null, userDetail.getAuthorities());
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-        filterChain.doFilter(request , response);
+        filterChain.doFilter(request, response);
     }
 }

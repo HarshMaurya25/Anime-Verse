@@ -9,4 +9,4 @@ springdoc:
   swagger-ui:
     config-url: /api/user/v3/api-docs/swagger-config
     url: /api/user/v3/api-docs
-    path: /v3/swagger-ui
+    path: /api/user/v3/swagger-ui

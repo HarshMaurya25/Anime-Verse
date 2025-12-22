@@ -16,21 +16,31 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @AllArgsConstructor
 public class SecurityConfig {
 
-    private final HandlerExceptionResolver handlerExceptionResolver;
-    public final HeaderFilterChain headerFilterChain;
+        private final HandlerExceptionResolver handlerExceptionResolver;
+        public final HeaderFilterChain headerFilterChain;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity){
-        return httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(headerFilterChain , UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(exceptionConfig ->
-                        exceptionConfig.accessDeniedHandler((request, response, accessDeniedException) ->
-                                handlerExceptionResolver.resolveException(request, response, null, accessDeniedException)
-                        ))
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .build();
-    }
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
+                return httpSecurity
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .addFilterBefore(headerFilterChain, UsernamePasswordAuthenticationFilter.class)
+                                .exceptionHandling(exceptionConfig -> exceptionConfig.accessDeniedHandler(
+                                                (request, response, accessDeniedException) -> handlerExceptionResolver
+                                                                .resolveException(request, response, null,
+                                                                                accessDeniedException)))
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-ui/**",
+                                                                "/v3/swagger-ui/**",
+                                                                "/swagger-ui.html",
+                                                                "/api/user/v3/**",
+                                                                "/error")
+                                                .permitAll()
+                                                .anyRequest().authenticated())
+                                .build();
+        }
 
 }
