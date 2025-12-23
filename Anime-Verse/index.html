@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>User Profile</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 30px;
+      }
+      input,
+      textarea,
+      button {
+        display: block;
+        margin: 10px 0;
+        padding: 8px;
+        width: 300px;
+      }
+      button {
+        width: 180px;
+        cursor: pointer;
+      }
+      img {
+        margin-top: 10px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Create User Profile</h2>
+
+    <form id="userForm">
+      <input type="text" id="id" placeholder="User UUID" required />
+      <input type="text" id="username" placeholder="Username" required />
+      <textarea id="bio" placeholder="Bio" required></textarea>
+      <input type="text" id="country" placeholder="Country" required />
+      <input type="file" id="file" accept="image/*" required />
+
+      <button type="submit">Create Profile</button>
+    </form>
+
+    <hr />
+
+    <h2>Get User Profile</h2>
+    <button id="getProfileBtn" type="button">Get Profile</button>
+
+    <div id="profileResult"></div>
+
+    <script>
+      const JWT_TOKEN =
+        "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInR5cGUiOiJBQ0NFU1MiLCJzdWIiOiI4ZjIzYmRhZC0xNTE0LTQ4YmEtYmIyYi00OTZjM2VhZTY3NzQiLCJpYXQiOjE3NjYzOTY0MjgsImV4cCI6MTc2ODk4ODQyOH0.WsxYEtj2-gXTxbNjeKuFcj-V8hzIQVd7f3UZ1PvPh98";
+
+      const form = document.getElementById("userForm");
+      const getProfileBtn = document.getElementById("getProfileBtn");
+      const profileResult = document.getElementById("profileResult");
+
+      /* =======================
+         CREATE PROFILE (POST)
+      ======================== */
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const userData = {
+          id: document.getElementById("id").value,
+          username: document.getElementById("username").value,
+          bio: document.getElementById("bio").value,
+          country: document.getElementById("country").value,
+        };
+
+        const fileInput = document.getElementById("file").files[0];
+
+        const formData = new FormData();
+        formData.append(
+          "data",
+          new Blob([JSON.stringify(userData)], { type: "application/json" })
+        );
+        formData.append("file", fileInput);
+
+        fetch("http://localhost:11111/api/user/profile/user/create", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + JWT_TOKEN,
+          },
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("Create failed");
+            return response.json();
+          })
+          .then((data) => {
+            alert("Profile created successfully");
+            console.log("Create response:", data);
+          })
+          .catch((error) => {
+            console.error(error);
+            alert("Error creating profile");
+          });
+      });
+
+      /* =======================
+         GET PROFILE (GET)
+      ======================== */
+      getProfileBtn.addEventListener("click", () => {
+        const userId = document.getElementById("id").value;
+
+        if (!userId) {
+          alert("Please enter User UUID first");
+          return;
+        }
+
+        fetch(
+          `http://localhost:11111/api/user/profile/get?id=${userId}&profileImg=true`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + JWT_TOKEN,
+            },
+          }
+        )
+          .then((response) => {
+            if (!response.ok) throw new Error("Fetch failed");
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Profile data:", data);
+
+            let imageHtml = "<p>No profile image</p>";
+
+            if (data.profileImg && data.imageType) {
+              const imgSrc = `data:${data.imageType};base64,${data.profileImg}`;
+              imageHtml = `<img src="${imgSrc}" width="150" />`;
+            }
+
+            profileResult.innerHTML = `
+    <h3>User Profile</h3>
+    <p><strong>Username:</strong> ${data.username ?? "N/A"}</p>
+    ${imageHtml}
+  `;
+          });
+      });
+    </script>
+  </body>
+</html>

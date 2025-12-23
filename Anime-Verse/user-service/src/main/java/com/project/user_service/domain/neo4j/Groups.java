@@ -1,4 +1,4 @@
-package com.project.user_service.domain.entity;
+package com.project.user_service.domain.neo4j;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,19 +30,21 @@ public class Groups {
 
     @NotNull
     @Property("group_profile_img")
-    private String groupProfileImg;
+    private String groupImg;
 
-    private String backgroundImg;
+    @NotNull
+    @Property("group_bg_img")
+    private String groupBackgroundImg;
 
     @Relationship(type = "LEADS", direction = Relationship.Direction.OUTGOING)
-    private Users leader;
+    private UserGraphs leader;
 
     @Relationship(type = "ADMIN", direction = Relationship.Direction.OUTGOING)
-    private Set<Users> admins = new HashSet<>();
+    private Set<UserGraphs> admins = new HashSet<>();
 
     @Relationship(type = "MEMBER", direction = Relationship.Direction.OUTGOING)
-    private Set<Users> members = new HashSet<>();
+    private Set<UserGraphs> members = new HashSet<>();
 
     @Relationship(type = "BLOCKED", direction = Relationship.Direction.OUTGOING)
-    private Set<Users> blocked = new HashSet<>();
+    private Set<UserGraphs> blocked = new HashSet<>();
 }

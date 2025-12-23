@@ -3,10 +3,22 @@ spring:
     name: user-service
 
   neo4j:
-    uri: neo4j+s://b0b5c523.databases.neo4j.io
+    uri: #URL
     authentication:
-      username: neo4j
-      password: aBlwsxqZGSVUpHnsPekh2xqZ5ajOmmYcXts1amtqO6o
+      username: #username
+      password: #password
+
+  datasource:
+    url: #url
+    username: #username
+    password: #password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
 server:
   port: 11113

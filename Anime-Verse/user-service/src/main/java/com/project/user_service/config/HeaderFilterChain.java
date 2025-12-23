@@ -1,6 +1,6 @@
 package com.project.user_service.config;
 
-import com.project.user_service.domain.entity.UserDetail;
+import com.project.user_service.domain.secuirtyEntity.UserDetailCustom;
 import com.project.user_service.domain.enums.Roles;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,7 +28,7 @@ public class HeaderFilterChain extends OncePerRequestFilter {
             return;
         }
 
-        UserDetail userDetail = new UserDetail(UUID.fromString(id), Roles.valueOf(role));
+        UserDetailCustom userDetail = new UserDetailCustom(UUID.fromString(id), Roles.valueOf(role));
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetail,
                 null, userDetail.getAuthorities());

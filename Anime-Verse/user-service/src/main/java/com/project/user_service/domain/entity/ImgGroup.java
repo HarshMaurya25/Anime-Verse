@@ -2,6 +2,7 @@ package com.project.user_service.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 import java.util.UUID;
@@ -13,24 +14,16 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Users {
+public class ImgGroup {
 
     @Id
     private UUID id;
 
-    @Column(nullable = false)
-    private String username;
 
-    private String bio;
-
-    @Column(nullable = false)
-    private String country;
-
-    @Column(nullable = false)
-    private Date dateOfBirth;
 
     @Lob
     private byte[] profileImg;
 
+    @NonNull
     private String imageType;
 }
