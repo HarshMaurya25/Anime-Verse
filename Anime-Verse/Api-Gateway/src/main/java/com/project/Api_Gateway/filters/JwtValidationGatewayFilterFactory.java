@@ -33,6 +33,10 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                 String userId = decodedJWT.getSubject();
                 String role = decodedJWT.getClaim("role").asString();
 
+                if (userId == null || userId.isBlank() || role == null || role.isBlank()) {
+                    throw new JWTDecodeException("Invalid token payload");
+                }
+
                 return chain.filter(exchange.mutate()
                         .request(r -> r
                                 .header("User-Id", userId)

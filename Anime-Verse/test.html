@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>User Profile</title>
+    <style>
+      img.profile-img {
+        max-width: 200px;
+        margin-top: 10px;
+        border-radius: 8px;
+        display: block;
+      }
+      .user-info {
+        margin-bottom: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background-color: #f9f9f9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Create User Profile</h1>
+    <form id="createUserForm">
+      <label for="id">User ID (UUID):</label><br />
+      <input type="text" id="id" name="id" required /><br /><br />
+
+      <label for="username">Username:</label><br />
+      <input type="text" id="username" name="username" required /><br /><br />
+
+      <label for="bio">Bio:</label><br />
+      <textarea id="bio" name="bio"></textarea><br /><br />
+
+      <label for="country">Country:</label><br />
+      <input type="text" id="country" name="country" required /><br /><br />
+
+      <label for="dob">Date of Birth:</label><br />
+      <input type="date" id="dob" name="dateOfBirth" required /><br /><br />
+
+      <label for="profileImg">Profile Image:</label><br />
+      <input type="file" id="profileImg" name="profileImg" /><br /><br />
+
+      <button type="submit">Create User</button>
+    </form>
+
+    <hr />
+
+    <h1>Get User Profile</h1>
+    <label for="getId">User ID:</label><br />
+    <input type="text" id="getId" name="getId" />
+    <button id="getUserBtn">Get User</button>
+
+    <div id="userResult"></div>
+
+    <script>
+      const apiBaseUrl = "http://localhost:11111/api/profile/user"; // adjust if needed
+      const token =
+        "Bearer eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInR5cGUiOiJBQ0NFU1MiLCJzdWIiOiI4ZjIzYmRhZC0xNTE0LTQ4YmEtYmIyYi00OTZjM2VhZTY3NzQiLCJpYXQiOjE3NjYzOTY0MjgsImV4cCI6MTc2ODk4ODQyOH0.WsxYEtj2-gXTxbNjeKuFcj-V8hzIQVd7f3UZ1PvPh98"; // your JWT
+
+      // Display user info including image
+      const displayUser = (data) => {
+        if (!data) {
+          document.getElementById("userResult").innerHTML = "No user found.";
+          alert("No user found.");
+          return;
+        }
+
+        // Show alert with response
+        alert(JSON.stringify(data, null, 2));
+
+        let html = `<div class="user-info">
+        <strong>ID:</strong> ${data.id}<br>
+        <strong>Username:</strong> ${data.username}<br>
+        <strong>Bio:</strong> ${data.bio || "-"}<br>
+        <strong>Country:</strong> ${data.country}<br>
+        <strong>Date of Birth:</strong> ${data.dateOfBirth}<br>
+        <strong>Followers:</strong> ${data.followers}<br>
+        <strong>Following:</strong> ${data.following}<br>
+      `;
+
+        if (data.profileImg && data.imageType) {
+          html += `<img src="data:${data.imageType};base64,${data.profileImg}" 
+                     alt="Profile Image" class="profile-img">`;
+        }
+
+        html += "</div>";
+        document.getElementById("userResult").innerHTML = html;
+      };
+
+      // Handle Create User Form
+      document
+        .getElementById("createUserForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const formData = new FormData();
+
+          const requestDto = {
+            id: form.id.value,
+            username: form.username.value,
+            bio: form.bio.value,
+            country: form.country.value,
+            dateOfBirth: form.dob.value,
+          };
+
+          formData.append(
+            "requestDto",
+            new Blob([JSON.stringify(requestDto)], { type: "application/json" })
+          );
+
+          const fileInput = document.getElementById("profileImg");
+          if (fileInput.files.length > 0) {
+            formData.append("file", fileInput.files[0]);
+          }
+
+          try {
+            const response = await fetch(`${apiBaseUrl}/create`, {
+              method: "POST",
+              headers: { Authorization: token },
+              body: formData,
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              alert("Error: " + JSON.stringify(errorData, null, 2));
+              return;
+            }
+
+            const data = await response.json();
+            displayUser(data);
+          } catch (err) {
+            console.error(err);
+            alert("Error creating user profile!");
+          }
+        });
+
+      // Handle Get User
+      document
+        .getElementById("getUserBtn")
+        .addEventListener("click", async () => {
+          const id = document.getElementById("getId").value;
+          if (!id) {
+            alert("Please enter a User ID");
+            return;
+          }
+
+          try {
+            const response = await fetch(`${apiBaseUrl}/get?id=${id}`, {
+              headers: { Authorization: token },
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              alert("Error: " + JSON.stringify(errorData, null, 2));
+              return;
+            }
+
+            const data = await response.json();
+            displayUser(data);
+          } catch (err) {
+            console.error(err);
+            alert("Error fetching user profile!");
+          }
+        });
+    </script>
+  </body>
+</html>

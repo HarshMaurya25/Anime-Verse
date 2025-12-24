@@ -1,12 +1,10 @@
-package com.project.user_service.domain.secuirtyEntity;
+package com.project.user_service.domain.security;
 
 import com.project.user_service.domain.enums.Roles;
 import com.project.user_service.service.RolePermissionMapping;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,12 +14,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@Getter
 @Setter
 @AllArgsConstructor
-@Builder
 public class UserDetailCustom implements UserDetails {
 
-    @Getter
     private final UUID id;
     private Roles role;
 
@@ -33,13 +30,13 @@ public class UserDetailCustom implements UserDetails {
     }
 
     @Override
-    public @Nullable String getPassword() {
-        return " ";
+    public String getPassword() {
+        return "x";
     }
 
     @Override
     public String getUsername() {
-        return " ";
+        return "x";
     }
 
     @Override
@@ -61,5 +58,4 @@ public class UserDetailCustom implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
 }

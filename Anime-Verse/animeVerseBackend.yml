@@ -122,16 +122,13 @@ services:
   user-service:
     image: magician05/user-service:latest
     container_name: user-service
-    restart: unless-stopped
-
+    depends_on:
+      - user-database
     environment:
-      SPRING_NEO4J_URI=bolt: neo4j+s://b0b5c523.databases.neo4j.io
-      SPRING_NEO4J_AUTHENTICATION_USERNAME: neo4j
-      SPRING_NEO4J_AUTHENTICATION_PASSWORD: aBlwsxqZGSVUpHnsPekh2xqZ5ajOmmYcXts1amtqO6o
-
-      SPRING_DATASOURCE_URL: jdbc:postgresql://user-database:5432/anime-verse
-      SPRING_DATASOURCE_USERNAME: anime-verse
-      SPRING_DATASOURCE_PASSWORD: anime-verse
+      # Spring Datasource (Postgres)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-database:5432/anime_verse
+      SPRING_DATASOURCE_USERNAME: anime_verse
+      SPRING_DATASOURCE_PASSWORD: anime_verse
 
     networks:
       - anime-verse-network
@@ -140,9 +137,9 @@ services:
     image: postgres:16
     container_name: user-database
     environment:
-      POSTGRES_DB: anime-verse
-      POSTGRES_USER: anime-verse
-      POSTGRES_PASSWORD: anime-verse
+      POSTGRES_DB: anime_verse
+      POSTGRES_USER: anime_verse
+      POSTGRES_PASSWORD: anime_verse
     volumes:
       - user-db:/var/lib/postgresql/data
     networks:
@@ -153,6 +150,7 @@ networks:
     driver: bridge
 
 volumes:
+  neo4j_data:
   auth-db:
   user-db:
   auth_redis_data:

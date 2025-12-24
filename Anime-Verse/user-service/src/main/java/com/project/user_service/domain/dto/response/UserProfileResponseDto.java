@@ -16,15 +16,19 @@ public class UserProfileResponseDto {
 
     private String username;
 
+    private String displayName;
+
     private String bio;
 
     private long followers;
 
     private long following;
 
-    private String country;
+    private String location;
 
     private byte[] profileImg;
 
     private String imageType;
+
+    private boolean isVerified;
 }

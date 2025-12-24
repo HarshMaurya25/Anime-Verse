@@ -1,15 +1,14 @@
 package com.project.user_service.controller;
 
 import com.project.user_service.domain.dto.request.CreateUserDetailsRequestDto;
+import com.project.user_service.domain.dto.request.UpdateUserProfileRequestDto;
 import com.project.user_service.domain.dto.response.UserProfileResponseDto;
-import com.project.user_service.domain.secuirtyEntity.UserDetailCustom;
 import com.project.user_service.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,37 +16,65 @@ import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
+@RequestMapping("/user")
 public class UserController {
 
     private final UserService userService;
 
-    @PreAuthorize("hasRole('MODERATOR') or authentication.principal.id.equals(#requestDto.id)")
-    @PostMapping(path = "/profile/user/create")
+    @PreAuthorize("authentication.principal.id.equals(#requestDto.id)")
+    @PostMapping("/profile/create")
     public ResponseEntity<UserProfileResponseDto> createUser(
-            @RequestPart("data") CreateUserDetailsRequestDto requestDto,
-            @RequestPart("file") MultipartFile file
-    ) {
-        UserProfileResponseDto responseDto = userService.createUser(requestDto, file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+            @Valid @RequestPart CreateUserDetailsRequestDto requestDto,
+            @RequestPart MultipartFile file
+            ){
+        UserProfileResponseDto responseDto = userService.createUser(requestDto , file);
+        return new ResponseEntity<>(responseDto , HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasRole('MODERATOR') or authentication.principal.id.equals(#id)")
-    @PostMapping("/profile/img/upload")
-    public ResponseEntity<?> uploadProfilePic(
-            @RequestPart MultipartFile file,
-            @RequestParam UUID id
-    ){
-        userService.profileImageUpload(file , id);
-        return ResponseEntity.ok().body("Image Updated");
-    }
-
-    @PreAuthorize("hasAuthority('user:get')")
     @GetMapping("/profile/get")
     public ResponseEntity<UserProfileResponseDto> getUser(
             @RequestParam UUID id
-    ) {
-        UserProfileResponseDto responseDto = userService.getUserDetail(id);
-        return ResponseEntity.ok()
-                .body(responseDto);
+    ){
+        UserProfileResponseDto responseDto = userService.getProfile(id);
+        return new ResponseEntity<>(responseDto , HttpStatus.OK);
     }
+
+    @PutMapping("/profile/image/update")
+    @PreAuthorize("authentication.principal.id.equals(#id)")
+    public ResponseEntity<Boolean> uploadImage(
+            @RequestPart MultipartFile file, @RequestParam UUID id
+    ){
+        return ResponseEntity.ok().body(userService.uploadImage(id , file));
+    }
+
+    @PutMapping("/profile/update")
+    @PreAuthorize("authentication.principal.id.equals(#id)")
+    public ResponseEntity<UserProfileResponseDto> updateProfile(
+            @RequestParam UUID id,
+            @Valid @RequestBody UpdateUserProfileRequestDto requestDto
+            ){
+        UserProfileResponseDto responseDto = userService.updateUserProfile(id , requestDto);
+        return ResponseEntity.ok().body(responseDto);
+    }
+
+    @PostMapping("/{userId}/follow/{targetId}")
+    @PreAuthorize("authentication.principal.id.equals(#userId) OR hasRole('MODERATOR')")
+    public ResponseEntity<Void> followUser(
+            @PathVariable UUID userId,
+            @PathVariable UUID targetId
+    ) {
+        userService.followUser(userId , targetId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{userId}/follow/{targetId}")
+    @PreAuthorize("authentication.principal.id.equals(#userId) OR hasRole('MODERATOR')")
+    public ResponseEntity<Void> unfollowUser(
+            @PathVariable UUID userId,
+            @PathVariable UUID targetId
+    ) {
+        userService.unfollowUser(userId , targetId);
+        return ResponseEntity.ok().build();
+    }
+
 }

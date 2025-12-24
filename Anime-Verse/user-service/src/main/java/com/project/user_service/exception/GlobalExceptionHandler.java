@@ -13,6 +13,7 @@ import org.springframework.web.HttpMediaTypeException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MultipartException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,9 +22,11 @@ import java.util.List;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    /* =========================
-       Validation Exceptions
-       ========================= */
+    /*
+     * =========================
+     * Validation Exceptions
+     * =========================
+     */
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<List<ApiError>> handleMethodArgumentNotValid(MethodArgumentNotValidException exception) {
@@ -41,36 +44,52 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<List<ApiError>> hendleIllegalArgumentException(IllegalArgumentException exception){
+    public ResponseEntity<List<ApiError>> hendleIllegalArgumentException(IllegalArgumentException exception) {
         return buildError(
                 exception.getMessage(),
                 "null value",
-                HttpStatus.BAD_REQUEST
-        );
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(HttpMediaTypeException.class)
     public ResponseEntity<List<ApiError>> handleHttpMediaTypeException(
-            HttpMediaTypeException exception
-    ) {
+            HttpMediaTypeException exception) {
         return buildError(
                 exception.getTypeMessageCode(),
                 exception.getLocalizedMessage(),
-                HttpStatus.UNSUPPORTED_MEDIA_TYPE
-        );
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 
-    /* =========================
-       Authentication & Authorization
-       ========================= */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<List<ApiError>> handleMultipartException(
+            MultipartException exception) {
+        return buildError(
+                exception.getMessage(),
+                "Multipart request required",
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ImageUploadFailedException.class)
+    public ResponseEntity<List<ApiError>> handleImageUploadFailedException(
+            ImageUploadFailedException exception) {
+        return buildError(
+                exception.getMessage(),
+                "Image Upload Failed",
+                HttpStatus.BAD_REQUEST);
+    }
+
+    /*
+     * =========================
+     * Authentication & Authorization
+     * =========================
+     */
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<List<ApiError>> handleBadCredentialsException(BadCredentialsException exception) {
         return buildError(
                 exception.getMessage(),
                 "Bad Credential",
-                HttpStatus.UNAUTHORIZED
-        );
+                HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(DisabledException.class)
@@ -78,8 +97,7 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Disable User",
-                HttpStatus.UNAUTHORIZED
-        );
+                HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -87,8 +105,7 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Authentication Failed",
-                HttpStatus.UNAUTHORIZED
-        );
+                HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
@@ -97,8 +114,7 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Authentication Credentials Not Found",
-                HttpStatus.UNAUTHORIZED
-        );
+                HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -106,21 +122,21 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Access Denied",
-                HttpStatus.FORBIDDEN
-        );
+                HttpStatus.FORBIDDEN);
     }
 
-    /* =========================
-       Business / Custom Exceptions
-       ========================= */
+    /*
+     * =========================
+     * Business / Custom Exceptions
+     * =========================
+     */
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<List<ApiError>> handleUserNotFoundException(UserNotFoundException exception) {
         return buildError(
                 exception.getMessage(),
                 "User Not Found",
-                HttpStatus.NOT_FOUND
-        );
+                HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(UsernameOrEmailAlreadyExistsException.class)
@@ -128,9 +144,17 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Username or Email Already Exists",
-                HttpStatus.BAD_REQUEST
-        );
+                HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<List<ApiError>> handleUserAlreadyExistsException(UserAlreadyExistsException exception) {
+        return buildError(
+                exception.getMessage(),
+                "User Already Exists",
+                HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler(ExpireOrWrongRefreshTokenException.class)
     public ResponseEntity<List<ApiError>> handleExpireOrWrongRefreshTokenException(
@@ -138,8 +162,7 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Expire Or Wrong Refresh Token",
-                HttpStatus.INTERNAL_SERVER_ERROR
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(VerificationCodeExpiredException.class)
@@ -148,8 +171,7 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Verification Code Expired",
-                HttpStatus.NOT_FOUND
-        );
+                HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(EmailAlreadySendException.class)
@@ -158,13 +180,14 @@ public class GlobalExceptionHandler {
         return buildError(
                 exception.getMessage(),
                 "Email Already Send",
-                HttpStatus.NOT_FOUND
-        );
+                HttpStatus.NOT_FOUND);
     }
 
-    /* =========================
-       Database Exceptions
-       ========================= */
+    /*
+     * =========================
+     * Database Exceptions
+     * =========================
+     */
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<List<ApiError>> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
@@ -180,26 +203,28 @@ public class GlobalExceptionHandler {
         return buildError(
                 message,
                 "Already Exists",
-                HttpStatus.BAD_REQUEST
-        );
+                HttpStatus.BAD_REQUEST);
     }
 
-    /* =========================
-       Generic Exception
-       ========================= */
+    /*
+     * =========================
+     * Generic Exception
+     * =========================
+     */
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<List<ApiError>> handleGenericException(RuntimeException exception) {
-        return buildError(
-                exception.getMessage(),
-                "Error Occured",
-                HttpStatus.INTERNAL_SERVER_ERROR
-        );
-    }
+//    @ExceptionHandler(RuntimeException.class)
+//    public ResponseEntity<List<ApiError>> handleGenericException(RuntimeException exception) {
+//        return buildError(
+//                exception.getMessage(),
+//                "Error Occured",
+//                HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 
-    /* =========================
-       Helper Method
-       ========================= */
+    /*
+     * =========================
+     * Helper Method
+     * =========================
+     */
 
     private ResponseEntity<List<ApiError>> buildError(
             String keyError,
@@ -211,10 +236,8 @@ public class GlobalExceptionHandler {
                         .keyError(keyError)
                         .valueError(valueError)
                         .timeStamp(LocalDateTime.now())
-                        .build()
-        );
+                        .build());
 
         return new ResponseEntity<>(error, status);
     }
 }
-
