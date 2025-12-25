@@ -4,7 +4,6 @@ import lombok.*;
 
 import java.util.UUID;
 
-
 @Getter
 @Setter
 @Builder
@@ -30,5 +29,5 @@ public class UserProfileResponseDto {
 
     private String imageType;
 
-    private boolean isVerified;
+    private Boolean isVerified;
 }

@@ -23,31 +23,27 @@ public class Users {
     @Column(updatable = false)
     private UUID id;
 
-    @Column(nullable = false , unique = true)
+    @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(length = 50 , nullable = false)
+    @Column(length = 50, nullable = false)
     private String displayName;
 
-    @Column(nullable = false , length = 200)
+    @Column(nullable = false, length = 200)
     private String bio;
 
-    @Column(nullable = false , length = 50)
+    @Column(nullable = false, length = 50)
     private String location;
 
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
-    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    @JoinTable(
-            name = "user_followers",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "follower_id")
-    )
-    private Set<Users> followers = new HashSet<>();
+    @OneToMany(mappedBy = "following")
+    private Set<Follow> followers = new HashSet<>();
 
-    @ManyToMany(mappedBy = "followers")
-    private Set<Users> following = new HashSet<>();
+    // following = people I follow
+    @OneToMany(mappedBy = "follower")
+    private Set<Follow> following = new HashSet<>();
 
     @Lob
     private byte[] profileImage;
@@ -55,7 +51,7 @@ public class Users {
     private String imageType;
 
     @Column(nullable = false)
-    private boolean enable = true;
+    private boolean enable;
 
     @Column(nullable = false)
     private boolean isVerified = false;
@@ -63,8 +59,9 @@ public class Users {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @PreUpdate
-    private void onUpdate() {
+    @PrePersist
+    private void onCreate() {
+        // ensure the not-null updated_at column is initialized on first insert
         this.updatedAt = LocalDateTime.now();
     }
 }

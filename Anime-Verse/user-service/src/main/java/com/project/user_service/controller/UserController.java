@@ -2,6 +2,7 @@ package com.project.user_service.controller;
 
 import com.project.user_service.domain.dto.request.CreateUserDetailsRequestDto;
 import com.project.user_service.domain.dto.request.UpdateUserProfileRequestDto;
+import com.project.user_service.domain.dto.response.GetFollowResponse;
 import com.project.user_service.domain.dto.response.UserProfileResponseDto;
 import com.project.user_service.service.UserService;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -20,6 +23,7 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+
 
     @PreAuthorize("authentication.principal.id.equals(#requestDto.id)")
     @PostMapping("/profile/create")
@@ -75,6 +79,24 @@ public class UserController {
     ) {
         userService.unfollowUser(userId , targetId);
         return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasAuthority('user:get')")
+    @GetMapping("/following/list")
+    public ResponseEntity<Set<GetFollowResponse>> getFollowing(
+            @RequestParam UUID id , @RequestParam int page
+    ){
+        Set<GetFollowResponse> responseDto = userService.getFollowing(id , page);
+        return new ResponseEntity<>(responseDto , HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAuthority('user:get')")
+    @GetMapping("/follower/list")
+    public ResponseEntity<Set<GetFollowResponse>> getFollower(
+            @RequestParam UUID id , @RequestParam int page
+    ){
+        Set<GetFollowResponse> responseDto = userService.getFollower(id , page);
+        return new ResponseEntity<>(responseDto , HttpStatus.OK);
     }
 
 }

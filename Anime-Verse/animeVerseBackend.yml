@@ -125,10 +125,11 @@ services:
     depends_on:
       - user-database
     environment:
-      # Spring Datasource (Postgres)
       SPRING_DATASOURCE_URL: jdbc:postgresql://user-database:5432/anime_verse
       SPRING_DATASOURCE_USERNAME: anime_verse
       SPRING_DATASOURCE_PASSWORD: anime_verse
+      SPRING_REDIS_HOST: user-redis
+      SPRING_REDIS_PORT: 6379
 
     networks:
       - anime-verse-network
@@ -145,6 +146,16 @@ services:
     networks:
       - anime-verse-network
 
+  user-redis:
+    image: redis:7.2-alpine
+    container_name: user-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - user_redis_data:/data
+
+    networks:
+      - anime-verse-network
+
 networks:
   anime-verse-network:
     driver: bridge
@@ -157,3 +168,4 @@ volumes:
   zookeeper-data:
   zookeeper-log:
   kafka-data:
+  user_redis_data:

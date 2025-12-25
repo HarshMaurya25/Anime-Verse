@@ -2,15 +2,22 @@ package com.project.user_service.service;
 
 import com.project.user_service.domain.dto.request.CreateUserDetailsRequestDto;
 import com.project.user_service.domain.dto.request.UpdateUserProfileRequestDto;
+import com.project.user_service.domain.dto.response.GetFollowResponse;
 import com.project.user_service.domain.dto.response.UserProfileResponseDto;
+import com.project.user_service.domain.entity.Follow;
 import com.project.user_service.domain.entity.Users;
+import com.project.user_service.domain.enums.RedisMethod;
 import com.project.user_service.exception.customException.ImageUploadFailedException;
 import com.project.user_service.exception.customException.UserAlreadyExistsException;
 import com.project.user_service.exception.customException.UserNotFoundException;
+import com.project.user_service.repository.FollowRepository;
 import com.project.user_service.repository.UsersRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,9 +30,13 @@ import java.util.*;
 public class UserService {
 
     private final UsersRepository userRepository;
+    private final RedisService redisService;
+    private final FollowRepository followRepository;
 
     private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-    private static final int PAGE_LIMIT = 30;
+    private static final int PAGE_LIMIT = 15;
+    private static final long TIME_REDIS = 600L;
+    private static final long TIME_REDIS_MAX = 36000 * 5;
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
             "image/jpeg",
@@ -49,9 +60,9 @@ public class UserService {
     }
 
     @Transactional
-    public UserProfileResponseDto createUser(CreateUserDetailsRequestDto requestDto , MultipartFile file){
+    public UserProfileResponseDto createUser(CreateUserDetailsRequestDto requestDto, MultipartFile file) {
 
-        if(userRepository.existsById(requestDto.getId())){
+        if (userRepository.existsById(requestDto.getId())) {
             throw new UserAlreadyExistsException(requestDto.getUsername());
         }
 
@@ -75,6 +86,7 @@ public class UserService {
                 .id(requestDto.getId())
                 .username(requestDto.getUsername())
                 .bio(requestDto.getBio())
+                .enable(true)
                 .location(requestDto.getLocation())
                 .displayName(requestDto.getDisplayName())
                 .dateOfBirth(requestDto.getDateOfBirth())
@@ -86,7 +98,7 @@ public class UserService {
 
         log.info("User {} created with id {}", user.getUsername(), user.getId());
 
-        return UserProfileResponseDto
+        UserProfileResponseDto responseDto = UserProfileResponseDto
                 .builder()
                 .id(requestDto.getId())
                 .displayName(requestDto.getDisplayName())
@@ -99,34 +111,51 @@ public class UserService {
                 .followers(0)
                 .following(0)
                 .build();
+
+        redisService.set(RedisMethod.USER_ + user.getId().toString(), responseDto, TIME_REDIS);
+        return responseDto;
     }
 
     @Transactional
     public UserProfileResponseDto getProfile(UUID id) {
+
+        UserProfileResponseDto responseDto = redisService.get(RedisMethod.USER_ + id.toString(),
+                UserProfileResponseDto.class);
+
+        if (responseDto != null) {
+            return responseDto;
+        }
+
         Users user = userRepository.findByIdWithFollowers(id)
                 .orElseThrow(() -> new UserNotFoundException(id.toString()));
 
-        if(!user.isEnable()){
+        if (!user.isEnable()) {
             throw new UserNotFoundException(id.toString());
         }
 
-        return UserProfileResponseDto.builder()
+        responseDto = UserProfileResponseDto.builder()
                 .id(user.getId())
                 .displayName(user.getDisplayName())
                 .username(user.getUsername())
                 .bio(user.getBio())
+                .location(user.getLocation())
                 .followers(user.getFollowers().size())
                 .following(user.getFollowing().size())
-                .location(user.getLocation())
                 .profileImg(user.getProfileImage())
                 .imageType(user.getImageType())
                 .isVerified(user.isVerified())
                 .build();
+
+        long time = TIME_REDIS + user.getFollowers().size();
+        time = Math.min(time , TIME_REDIS_MAX);
+        redisService.set(RedisMethod.USER_ + user.getId().toString(), responseDto, time);
+        return responseDto;
+
     }
 
     @Transactional
-    public boolean uploadImage(UUID id , MultipartFile file){
-        if(id == null || file == null || file.isEmpty()){
+    public boolean uploadImage(UUID id, MultipartFile file) {
+        if (id == null || file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Id or Image");
         }
 
@@ -134,7 +163,7 @@ public class UserService {
 
         Users user = userRepository.findByIdAndEnableTrue(id);
 
-        if(user == null){
+        if (user == null) {
             throw new UserNotFoundException(id.toString());
         }
 
@@ -143,21 +172,23 @@ public class UserService {
             user.setImageType(file.getContentType());
 
             userRepository.save(user);
+
+            redisService.delete(RedisMethod.USER_ + user.getId().toString());
+
         } catch (IOException e) {
             throw new ImageUploadFailedException(e.getMessage());
         }
 
-        log.info("User : {} with username : {} update Profile Image" , user.getId().toString() , user.getUsername());
+        log.info("User : {} with username : {} update Profile Image", user.getId().toString(), user.getUsername());
         return true;
     }
 
     @Transactional
     public UserProfileResponseDto updateUserProfile(
             UUID id,
-            UpdateUserProfileRequestDto dto
-    ) {
+            UpdateUserProfileRequestDto dto) {
 
-        if(id == null){
+        if (id == null) {
             throw new IllegalArgumentException("User id must not be null");
         }
 
@@ -191,90 +222,105 @@ public class UserService {
 
         userRepository.save(user);
 
-        log.info("User : {} ({}) updated its : {}" , user.getId().toString() , user.getUsername() , updated.toString());
+        log.info("User : {} ({}) updated its : {}", user.getId().toString(), user.getUsername(), updated.toString());
 
-        return UserProfileResponseDto.builder()
-                .id(user.getId())
-                .displayName(user.getDisplayName())
-                .username(user.getUsername())
-                .bio(user.getBio())
-                .location(user.getLocation())
-                .followers(user.getFollowers().size())
-                .following(user.getFollowing().size())
-                .profileImg(user.getProfileImage())
-                .imageType(user.getImageType())
-                .isVerified(user.isVerified())
-                .build();
+        redisService.delete(RedisMethod.USER_ + user.getId().toString());
+
+        return getProfile(id);
     }
 
     @Transactional
     public void followUser(UUID userId, UUID targetUserId) {
 
-        if(userId == null || targetUserId == null){
-            throw new IllegalArgumentException("Id must not be null");
-        }
-
         if (userId.equals(targetUserId)) {
             throw new IllegalArgumentException("You cannot follow yourself");
         }
 
-        Users user = userRepository.findByIdWithFollowersAndFollowing(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId.toString()));
+        Users user = userRepository.findByIdAndEnableTrue(userId);
 
-        Users targetUser = userRepository.findByIdWithFollowersAndFollowing(targetUserId)
-                .orElseThrow(() -> new UserNotFoundException(targetUserId.toString()));
-
-        if (!user.isEnable() || !targetUser.isEnable()) {
-            throw new UserNotFoundException("User is disabled");
+        if(user == null){
+            throw new UserNotFoundException(userId.toString());
         }
 
-        if (targetUser.getFollowers().contains(user)) {
+        Users targetUser = userRepository.findByIdAndEnableTrue(targetUserId);
+
+        if(targetUser == null){
+            throw new UserNotFoundException(userId.toString());
+        }
+
+        if (followRepository.existsByFollowerAndFollowing(user, targetUser)) {
             throw new IllegalStateException("Already following this user");
         }
 
-        targetUser.getFollowers().add(user);
-        user.getFollowing().add(targetUser);
+        followRepository.save(
+                Follow.builder()
+                        .follower(user)
+                        .following(targetUser)
+                        .build()
+        );
 
-        userRepository.save(user);
-        userRepository.save(targetUser);
+        redisService.delete(RedisMethod.USER_ + userId.toString());
+        redisService.delete(RedisMethod.USER_ + targetUserId.toString());
 
-
-        log.info("User followed successfully: userId={} targetUserId={}",
-                userId, targetUserId);
+        log.info("User {} followed {}", userId, targetUserId);
     }
+
 
     @Transactional
     public void unfollowUser(UUID userId, UUID targetUserId) {
 
-        if(userId == null || targetUserId == null){
-            throw new IllegalArgumentException("Id must not be null");
+        Users user = userRepository.findByIdAndEnableTrue(userId);
+
+        if(user == null){
+            throw new UserNotFoundException(userId.toString());
         }
 
-        if (userId.equals(targetUserId)) {
-            throw new IllegalArgumentException("You cannot unfollow yourself");
+        Users targetUser = userRepository.findByIdAndEnableTrue(targetUserId);
+
+        if(targetUser == null){
+            throw new UserNotFoundException(userId.toString());
         }
 
-        Users user = userRepository.findByIdWithFollowersAndFollowing(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId.toString()));
+        int deleted = followRepository.deleteFollowerAndFollowing(user, targetUser);
 
-        Users targetUser = userRepository.findByIdWithFollowersAndFollowing(targetUserId)
-                .orElseThrow(() -> new UserNotFoundException(targetUserId.toString()));
-
-        if (!targetUser.getFollowers().contains(user)) {
+        if (deleted == 0) {
             throw new IllegalStateException("You are not following this user");
         }
 
-        targetUser.getFollowers().remove(user);
-        user.getFollowing().remove(targetUser);
+        redisService.delete(RedisMethod.USER_ + userId.toString());
+        redisService.delete(RedisMethod.USER_ + targetUserId.toString());
 
-        userRepository.save(user);
-        userRepository.save(targetUser);
-
-        log.info("User unfollowed successfully: userId={} targetUserId={}",
-                userId, targetUserId);
+        log.info("User {} unfollowed {}", userId, targetUserId);
     }
 
+    @Transactional
+    public Set<GetFollowResponse> getFollowing(UUID id , int page){
+        if(id == null){
+            throw new IllegalArgumentException("ID");
+        }
 
+        if(page < 0){
+            page = 0;
+        }
+
+        Pageable pageable = PageRequest.of(page , PAGE_LIMIT);
+
+        return followRepository.getFollowing(id, pageable).toSet();
+    }
+
+    @Transactional
+    public Set<GetFollowResponse> getFollower(UUID id , int page){
+        if(id == null){
+            throw new IllegalArgumentException("ID");
+        }
+
+        if(page < 0){
+            page = 0;
+        }
+
+        Pageable pageable = PageRequest.of(page, PAGE_LIMIT);
+
+        return followRepository.getFollower(id, pageable).toSet();
+    }
 
 }
-

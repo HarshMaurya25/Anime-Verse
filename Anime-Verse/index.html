@@ -64,11 +64,12 @@
 
     <p class="muted">
       Set your API base URL if your user service is hosted elsewhere (default is
-      <code>http://localhost:11111/api/profile</code>).
+      <code>http://localhost:11111/user</code> to match the controller
+      mappings).
     </p>
 
     <label for="apiBase">API Base URL</label>
-    <input id="apiBase" value="http://localhost:11111/api/profile" />
+    <input id="apiBase" value="http://localhost:11111/api/profile/user" />
 
     <label for="token">JWT Token (include the "Bearer " prefix)</label>
     <input id="token" placeholder="Bearer eyJ..." />
@@ -95,8 +96,8 @@
       <label>Date of Birth</label>
       <input id="createDob" type="date" />
 
-      <label>Profile Image (optional)</label>
-      <input id="createImage" type="file" accept="image/*" />
+      <label>Profile Image (required by API)</label>
+      <input id="createImage" type="file" accept="image/*" required />
 
       <button type="submit">Create</button>
     </form>
@@ -219,7 +220,11 @@
             new Blob([JSON.stringify(dto)], { type: "application/json" })
           );
           const file = document.getElementById("createImage").files[0];
-          if (file) formData.append("file", file);
+          if (!file) {
+            showMessage("Profile image is required by the API");
+            return;
+          }
+          formData.append("file", file);
 
           try {
             const res = await fetch(`${base}/profile/create`, {

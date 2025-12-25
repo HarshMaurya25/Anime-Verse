@@ -15,22 +15,22 @@ public class RedisService {
 
     private final RedisTemplate redisTemplate;
 
-    public <T> T get(String key, Class<T> responseClass){
-        try{
+    public <T> T get(String key, Class<T> responseClass) {
+        try {
             Object o = redisTemplate.opsForValue().get(key);
             ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(o.toString() , responseClass);
-        }catch (Exception e){
-            log.error("Redis service : {}",e.getMessage());
+            return mapper.readValue(o.toString(), responseClass);
+        } catch (Exception e) {
+            log.error("Redis service : {}", e.getMessage());
             return null;
         }
     }
 
-    public void set(String key , Object o , long Ttl){
+    public void set(String key, Object o, long Ttl) {
         try {
-            redisTemplate.opsForValue().set(key , o.toString() , Ttl , TimeUnit.SECONDS);
-        }catch (Exception e){
-            log.error("Redis service : {}",e.getMessage());
+            redisTemplate.opsForValue().set(key, o.toString(), Ttl, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Redis service : {}", e.getMessage());
         }
     }
 
