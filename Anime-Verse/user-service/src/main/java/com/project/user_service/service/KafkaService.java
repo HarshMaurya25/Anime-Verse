@@ -1,7 +1,7 @@
 package com.project.user_service.service;
 
 import com.project.user_service.domain.dto.kafka.DataTransfer;
-import com.project.user_service.domain.entity.Users;
+import com.project.user_service.domain.entity.users.Users;
 import com.project.user_service.domain.enums.KafkaDataTransferFields;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

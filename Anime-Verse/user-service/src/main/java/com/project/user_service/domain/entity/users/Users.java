@@ -1,8 +1,9 @@
-package com.project.user_service.domain.entity;
+package com.project.user_service.domain.entity.users;
 
+import com.project.user_service.domain.entity.groups.GroupMember;
+import com.project.user_service.domain.entity.groups.Group;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.action.internal.OrphanRemovalAction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,10 +39,13 @@ public class Users {
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
+
+    @Builder.Default
     @OneToMany(mappedBy = "following")
     private Set<Follow> followers = new HashSet<>();
 
-    // following = people I follow
+
+    @Builder.Default
     @OneToMany(mappedBy = "follower")
     private Set<Follow> following = new HashSet<>();
 
@@ -55,11 +59,20 @@ public class Users {
     private boolean isVerified = false;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdAt;
+
+    @Builder.Default
+    @OneToMany(orphanRemoval = true , mappedBy = "leader" , cascade = CascadeType.ALL , fetch = FetchType.LAZY)
+    private Set<Group> leaderOfGroup = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(orphanRemoval = true , mappedBy = "users" , cascade = CascadeType.ALL , fetch = FetchType.LAZY)
+    private Set<GroupMember> groupMembers = new HashSet<>();
 
     @PrePersist
     private void onCreate() {
-        // ensure the not-null updated_at column is initialized on first insert
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.enable = true;
+        this.isVerified = false;
     }
 }

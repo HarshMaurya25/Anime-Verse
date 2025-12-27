@@ -4,9 +4,9 @@ import com.project.user_service.domain.dto.request.CreateUserDetailsRequestDto;
 import com.project.user_service.domain.dto.request.UpdateUserProfileRequestDto;
 import com.project.user_service.domain.dto.response.GetFollowResponse;
 import com.project.user_service.domain.dto.response.UserProfileResponseDto;
-import com.project.user_service.domain.entity.Follow;
-import com.project.user_service.domain.entity.ImageUserEntity;
-import com.project.user_service.domain.entity.Users;
+import com.project.user_service.domain.entity.users.Follow;
+import com.project.user_service.domain.entity.users.ImageUserEntity;
+import com.project.user_service.domain.entity.users.Users;
 import com.project.user_service.domain.enums.RedisMethod;
 import com.project.user_service.domain.security.UserDetailCustom;
 import com.project.user_service.exception.customException.ImageUploadFailedException;
@@ -40,7 +40,7 @@ public class UserService {
     private final KafkaService kafkaService;
     private final ImageUserEntityRepository imageUserEntityRepository;
 
-    private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024;
     private static final int PAGE_LIMIT = 15;
     private static final long TIME_REDIS = 600L;
     private static final long TIME_REDIS_MAX = 36000 * 5;
@@ -84,7 +84,7 @@ public class UserService {
                 image = file.getBytes();
                 imageType = file.getContentType();
             } catch (IOException e) {
-                throw new RuntimeException("Failed to read profile image", e);
+                throw new ImageUploadFailedException("Failed to profile image");
             }
         }
 
@@ -321,7 +321,7 @@ public class UserService {
     }
 
     @Transactional
-    public Set<GetFollowResponse> getFollowing(UUID id , int page){
+    public Page<GetFollowResponse> getFollowing(UUID id , int page){
         if(id == null){
             throw new IllegalArgumentException("ID");
         }
@@ -332,11 +332,11 @@ public class UserService {
 
         Pageable pageable = PageRequest.of(page , PAGE_LIMIT);
 
-        return followRepository.getFollowing(id, pageable).toSet();
+        return followRepository.getFollowing(id, pageable);
     }
 
     @Transactional
-    public Set<GetFollowResponse> getFollower(UUID id , int page){
+    public Page<GetFollowResponse> getFollower(UUID id , int page){
         if(id == null){
             throw new IllegalArgumentException("ID");
         }
@@ -347,7 +347,7 @@ public class UserService {
 
         Pageable pageable = PageRequest.of(page, PAGE_LIMIT);
 
-        return followRepository.getFollower(id, pageable).toSet();
+        return followRepository.getFollower(id, pageable);
     }
 
 }

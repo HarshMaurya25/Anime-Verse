@@ -77,7 +77,6 @@ public class GlobalExceptionHandler {
                 "Image Upload Failed",
                 HttpStatus.BAD_REQUEST);
     }
-
     /*
      * =========================
      * Authentication & Authorization
