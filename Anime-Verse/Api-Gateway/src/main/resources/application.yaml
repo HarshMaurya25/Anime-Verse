@@ -49,7 +49,14 @@ spring:
             - id: user-service-api-docs
               uri: http://user-service:11113
               predicates:
-                - Path=/api/user/v3/**
+                - Path=/api/profile/v3/**
+              filters:
+                - StripPrefix=2
+
+            - id: search-service-api-docs
+              uri: http://search-service:11114
+              predicates:
+                - Path=/api/search/v3/**
               filters:
                 - StripPrefix=2
 
@@ -61,3 +68,10 @@ spring:
                 - StripPrefix=2
                 - JwtValidation
 
+            - id: search-service
+              uri: http://search-service:11114
+              predicates:
+                - Path=/api/search/**
+              filters:
+                - StripPrefix=2
+                - JwtValidation

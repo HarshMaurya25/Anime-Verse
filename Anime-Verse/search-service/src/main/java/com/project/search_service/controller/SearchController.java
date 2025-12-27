@@ -1,0 +1,30 @@
+package com.project.search_service.controller;
+
+import com.project.search_service.domain.dto.UserSearchResponseDto;
+import com.project.search_service.service.UserService;
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Set;
+
+@RestController
+@AllArgsConstructor
+public class SearchController {
+
+    private final UserService userService;
+
+    @GetMapping("/user/get")
+    private ResponseEntity<Set<UserSearchResponseDto>> searchUser(
+            @RequestParam int page, @RequestParam String keyword
+            ){
+        Page<UserSearchResponseDto> responseDtos = userService.searchUser(keyword , page);
+
+        return new ResponseEntity<>(responseDtos.toSet() , HttpStatus.OK);
+    }
+
+}

@@ -13,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,13 +23,12 @@ public class UserController {
 
     private final UserService userService;
 
-
     @PreAuthorize("authentication.principal.id.equals(#requestDto.id)")
     @PostMapping("/profile/create")
     public ResponseEntity<UserProfileResponseDto> createUser(
             @Valid @RequestPart CreateUserDetailsRequestDto requestDto,
             @RequestPart MultipartFile file
-            ){
+    ){
         UserProfileResponseDto responseDto = userService.createUser(requestDto , file);
         return new ResponseEntity<>(responseDto , HttpStatus.CREATED);
     }
@@ -98,5 +96,4 @@ public class UserController {
         Set<GetFollowResponse> responseDto = userService.getFollower(id , page);
         return new ResponseEntity<>(responseDto , HttpStatus.OK);
     }
-
 }

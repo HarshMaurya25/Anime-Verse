@@ -32,6 +32,7 @@ public class UserService {
     private final UsersRepository userRepository;
     private final RedisService redisService;
     private final FollowRepository followRepository;
+    private final KafkaService kafkaService;
 
     private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024;
     private static final int PAGE_LIMIT = 15;
@@ -113,6 +114,9 @@ public class UserService {
                 .build();
 
         redisService.set(RedisMethod.USER_ + user.getId().toString(), responseDto, TIME_REDIS);
+
+        kafkaService.saveIntoUserDatabase(user);
+
         return responseDto;
     }
 
