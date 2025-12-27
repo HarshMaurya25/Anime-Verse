@@ -32,4 +32,27 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
     """)
     Optional<Users> findByIdWithFollowersAndFollowing(UUID id);
 
+
+    @Query("""
+    SELECT new com.project.user_service.domain.dto.response.UserProfileResponseDto(
+        u.id,
+        u.username,
+        u.displayName,
+        u.bio,
+        (SELECT COUNT(f) FROM Follow f WHERE f.following.id = u.id),
+        (SELECT COUNT(f) FROM Follow f WHERE f.follower.id = u.id),
+        u.location,
+        null,
+        null,
+        u.isVerified,
+        null
+    )
+    FROM Users u
+    WHERE u.id = :id AND u.enable = true
+""")
+    Optional<UserProfileResponseDto> getUserWithDetails(UUID id);
+
+
+
+    boolean existsByIdAndEnableTrue(UUID id);
 }

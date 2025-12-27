@@ -22,10 +22,10 @@ public class RedisService {
     public <T> T get(String key, Class<T> valueObjectType) {
         try {
             Object value = redisTemplate.opsForValue().get(key);
-            log.info("User : {} is saved" , key);
             if (value == null) {
                 return null;
             }
+            log.info("User : {} is get" , key);
             return objectMapper.convertValue(value, valueObjectType);
         } catch (Exception e) {
             log.error("Redis service : {}", e.getMessage());
@@ -36,7 +36,7 @@ public class RedisService {
     public void set(String key, Object value, long ttl) {
         try {
             redisTemplate.opsForValue().set(key, value, ttl, TimeUnit.SECONDS);
-            log.info("User : {} is get" , key);
+            log.info("User : {} is saved" , key);
         } catch (Exception e) {
             log.error("Redis service : {}", e.getMessage());
         }

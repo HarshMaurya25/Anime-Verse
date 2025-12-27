@@ -45,10 +45,8 @@ public class Users {
     @OneToMany(mappedBy = "follower")
     private Set<Follow> following = new HashSet<>();
 
-    @Lob
-    private byte[] profileImage;
-
-    private String imageType;
+    @OneToOne(cascade = CascadeType.ALL , orphanRemoval = true , fetch = FetchType.LAZY)
+    private ImageUserEntity imageUserEntity;
 
     @Column(nullable = false)
     private boolean enable;

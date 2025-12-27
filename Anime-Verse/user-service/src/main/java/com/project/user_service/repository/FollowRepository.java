@@ -51,4 +51,6 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     WHERE f.following.id = :id
 """)
     Page<GetFollowResponse> getFollower(@Param("id") UUID id , Pageable pageable);
+
+    Boolean existsByFollower_IdAndFollowing_Id(UUID id, UUID id1);
 }

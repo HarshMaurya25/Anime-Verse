@@ -5,12 +5,15 @@ import com.project.user_service.domain.dto.request.UpdateUserProfileRequestDto;
 import com.project.user_service.domain.dto.response.GetFollowResponse;
 import com.project.user_service.domain.dto.response.UserProfileResponseDto;
 import com.project.user_service.domain.entity.Follow;
+import com.project.user_service.domain.entity.ImageUserEntity;
 import com.project.user_service.domain.entity.Users;
 import com.project.user_service.domain.enums.RedisMethod;
+import com.project.user_service.domain.security.UserDetailCustom;
 import com.project.user_service.exception.customException.ImageUploadFailedException;
 import com.project.user_service.exception.customException.UserAlreadyExistsException;
 import com.project.user_service.exception.customException.UserNotFoundException;
 import com.project.user_service.repository.FollowRepository;
+import com.project.user_service.repository.ImageUserEntityRepository;
 import com.project.user_service.repository.UsersRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -18,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,6 +38,7 @@ public class UserService {
     private final RedisService redisService;
     private final FollowRepository followRepository;
     private final KafkaService kafkaService;
+    private final ImageUserEntityRepository imageUserEntityRepository;
 
     private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024;
     private static final int PAGE_LIMIT = 15;
@@ -82,6 +88,13 @@ public class UserService {
             }
         }
 
+        ImageUserEntity imageEntity = ImageUserEntity
+                .builder()
+                .id(requestDto.getId())
+                .image(image)
+                .imageType(imageType)
+                .build();
+
         Users user = Users
                 .builder()
                 .id(requestDto.getId())
@@ -91,8 +104,7 @@ public class UserService {
                 .location(requestDto.getLocation())
                 .displayName(requestDto.getDisplayName())
                 .dateOfBirth(requestDto.getDateOfBirth())
-                .profileImage(image)
-                .imageType(imageType)
+                .imageUserEntity(imageEntity)
                 .build();
 
         userRepository.save(user);
@@ -106,16 +118,17 @@ public class UserService {
                 .username(requestDto.getUsername())
                 .bio(user.getBio())
                 .location(user.getLocation())
-                .profileImg(user.getProfileImage())
-                .imageType(user.getImageType())
+                .profileImg(user.getImageUserEntity().getImage())
+                .imageType(user.getImageUserEntity().getImageType())
                 .isVerified(false)
                 .followers(0)
                 .following(0)
                 .build();
+        responseDto.setIsFollow(false);
 
         redisService.set(RedisMethod.USER_ + user.getId().toString(), responseDto, TIME_REDIS);
-
         kafkaService.saveIntoUserDatabase(user);
+
 
         return responseDto;
     }
@@ -127,32 +140,40 @@ public class UserService {
                 UserProfileResponseDto.class);
 
         if (responseDto != null) {
+            long time = TIME_REDIS + responseDto.getFollowers();
+            time = Math.min(time , TIME_REDIS_MAX);
+            redisService.set(RedisMethod.USER_ + id.toString(), responseDto, time);
             return responseDto;
         }
 
-        Users user = userRepository.findByIdWithFollowers(id)
+        Optional<UserProfileResponseDto> optUser = userRepository.getUserWithDetails(id);
+        ImageUserEntity imageUserEntity = imageUserEntityRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id.toString()));
 
-        if (!user.isEnable()) {
+        if(optUser.isEmpty()){
             throw new UserNotFoundException(id.toString());
         }
 
-        responseDto = UserProfileResponseDto.builder()
-                .id(user.getId())
-                .displayName(user.getDisplayName())
-                .username(user.getUsername())
-                .bio(user.getBio())
-                .location(user.getLocation())
-                .followers(user.getFollowers().size())
-                .following(user.getFollowing().size())
-                .profileImg(user.getProfileImage())
-                .imageType(user.getImageType())
-                .isVerified(user.isVerified())
-                .build();
+        responseDto = optUser.get();
+        responseDto.setImageType(imageUserEntity.getImageType());
+        responseDto.setProfileImg(imageUserEntity.getImage());
 
-        long time = TIME_REDIS + user.getFollowers().size();
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        Boolean following = false;
+
+        if(authentication != null) {
+            UserDetailCustom userDetailCustom =
+                    (UserDetailCustom) authentication.getPrincipal();
+
+            following = followRepository.existsByFollower_IdAndFollowing_Id(userDetailCustom.getId(), id);
+        }
+
+        responseDto.setIsFollow(following);
+
+        long time = TIME_REDIS + optUser.get().getFollowers();
         time = Math.min(time , TIME_REDIS_MAX);
-        redisService.set(RedisMethod.USER_ + user.getId().toString(), responseDto, time);
+        redisService.set(RedisMethod.USER_ + optUser.get().getId().toString(), responseDto, time);
         return responseDto;
 
     }
@@ -165,25 +186,27 @@ public class UserService {
 
         validateProfileImage(file);
 
-        Users user = userRepository.findByIdAndEnableTrue(id);
-
-        if (user == null) {
-            throw new UserNotFoundException(id.toString());
+        if(!userRepository.existsByIdAndEnableTrue(id)){
+            throw new UserNotFoundException("User : " + id.toString());
         }
 
         try {
-            user.setProfileImage(file.getBytes());
-            user.setImageType(file.getContentType());
+            ImageUserEntity imageUserEntity = imageUserEntityRepository.findById(id)
+                            .orElseThrow(() -> new UserNotFoundException("Image " + id.toString()));
 
-            userRepository.save(user);
+            imageUserEntity.setImage(file.getBytes());
+            imageUserEntity.setImageType(file.getContentType());
 
-            redisService.delete(RedisMethod.USER_ + user.getId().toString());
+
+            imageUserEntityRepository.save(imageUserEntity);
+
+            redisService.delete(RedisMethod.USER_ + id.toString());
 
         } catch (IOException e) {
             throw new ImageUploadFailedException(e.getMessage());
         }
 
-        log.info("User : {} with username : {} update Profile Image", user.getId().toString(), user.getUsername());
+        log.info("User : {} update Profile Image", id.toString());
         return true;
     }
 

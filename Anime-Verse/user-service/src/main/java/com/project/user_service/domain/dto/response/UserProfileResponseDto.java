@@ -30,4 +30,6 @@ public class UserProfileResponseDto {
     private String imageType;
 
     private Boolean isVerified;
+
+    private Boolean isFollow;
 }
