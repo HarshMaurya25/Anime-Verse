@@ -213,7 +213,7 @@ class UserServiceTest {
             when(redisService.get(RedisMethod.USER_ + testUserId.toString(), UserProfileResponseDto.class))
                     .thenReturn(cachedProfile);
 
-            UserProfileResponseDto result = userService.getProfile(testUserId);
+            UserProfileResponseDto result = userService.getProfile(testUserId , false);
 
             assertThat(result).isEqualTo(cachedProfile);
             verify(redisService).set(eq(RedisMethod.USER_ + testUserId.toString()), any(UserProfileResponseDto.class),
@@ -238,7 +238,7 @@ class UserServiceTest {
             when(userRepository.getUserWithDetails(testUserId)).thenReturn(Optional.of(dbProfile));
             when(imageUserEntityRepository.findById(testUserId)).thenReturn(Optional.of(imageUserEntity));
 
-            UserProfileResponseDto result = userService.getProfile(testUserId);
+            UserProfileResponseDto result = userService.getProfile(testUserId , false);
 
             assertThat(result).isNotNull();
             assertThat(result.getUsername()).isEqualTo("testuser");
@@ -252,7 +252,7 @@ class UserServiceTest {
             when(redisService.get(anyString(), eq(UserProfileResponseDto.class))).thenReturn(null);
             when(userRepository.getUserWithDetails(testUserId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> userService.getProfile(testUserId))
+            assertThatThrownBy(() -> userService.getProfile(testUserId , false))
                     .isInstanceOf(UserNotFoundException.class);
         }
     }

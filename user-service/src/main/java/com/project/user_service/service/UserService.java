@@ -134,37 +134,41 @@ public class UserService {
     }
 
     @Transactional
-    public UserProfileResponseDto getProfile(UUID id) {
+    public UserProfileResponseDto getProfile(UUID id, Boolean image) {
 
         UserProfileResponseDto responseDto = redisService.get(RedisMethod.USER_ + id.toString(),
                 UserProfileResponseDto.class);
 
         if (responseDto != null) {
             long time = TIME_REDIS + responseDto.getFollowers();
-            time = Math.min(time , TIME_REDIS_MAX);
+            time = Math.min(time, TIME_REDIS_MAX);
             redisService.set(RedisMethod.USER_ + id.toString(), responseDto, time);
             return responseDto;
         }
 
         Optional<UserProfileResponseDto> optUser = userRepository.getUserWithDetails(id);
-        ImageUserEntity imageUserEntity = imageUserEntityRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id.toString()));
-
-        if(optUser.isEmpty()){
+        if (optUser.isEmpty()) {
             throw new UserNotFoundException(id.toString());
         }
 
-        responseDto = optUser.get();
-        responseDto.setImageType(imageUserEntity.getImageType());
-        responseDto.setProfileImg(imageUserEntity.getImage());
+        byte[] imagebytes = null;
+        String imageType = null;
+        if (image) {
+            ImageUserEntity imageUserEntity = imageUserEntityRepository.findById(id)
+                    .orElseThrow(() -> new UserNotFoundException(id.toString()));
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+            imagebytes = imageUserEntity.getImage();
+            imageType = imageUserEntity.getImageType();
+        }
+        responseDto = optUser.get();
+        responseDto.setImageType(imageType);
+        responseDto.setProfileImg(imagebytes);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Boolean following = false;
 
-        if(authentication != null) {
-            UserDetailCustom userDetailCustom =
-                    (UserDetailCustom) authentication.getPrincipal();
+        if (authentication != null) {
+            UserDetailCustom userDetailCustom = (UserDetailCustom) authentication.getPrincipal();
 
             following = followRepository.existsByFollower_IdAndFollowing_Id(userDetailCustom.getId(), id);
         }
@@ -172,7 +176,7 @@ public class UserService {
         responseDto.setIsFollow(following);
 
         long time = TIME_REDIS + optUser.get().getFollowers();
-        time = Math.min(time , TIME_REDIS_MAX);
+        time = Math.min(time, TIME_REDIS_MAX);
         redisService.set(RedisMethod.USER_ + optUser.get().getId().toString(), responseDto, time);
         return responseDto;
 

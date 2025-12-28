@@ -34,8 +34,8 @@ public class UserController {
 
     @GetMapping("/profile/get")
     public ResponseEntity<UserProfileResponseDto> getUser(
-            @RequestParam UUID id) {
-        UserProfileResponseDto responseDto = userService.getProfile(id);
+            @RequestParam UUID id , @RequestParam Boolean image) {
+        UserProfileResponseDto responseDto = userService.getProfile(id , image);
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 
