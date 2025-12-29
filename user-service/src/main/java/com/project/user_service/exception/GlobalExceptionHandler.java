@@ -77,6 +77,15 @@ public class GlobalExceptionHandler {
                 "Image Upload Failed",
                 HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<List<ApiError>> handleNullPointerException(
+            NullPointerException exception) {
+        return buildError(
+                exception.getMessage(),
+                "Can't be Null",
+                HttpStatus.BAD_REQUEST);
+    }
     /*
      * =========================
      * Authentication & Authorization

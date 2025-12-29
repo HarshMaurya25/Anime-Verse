@@ -2,7 +2,9 @@ package com.project.user_service.repository;
 
 import com.project.user_service.domain.dto.response.GroupResponseDto;
 import com.project.user_service.domain.entity.groups.Group;
-import io.lettuce.core.dynamic.annotation.Param;
+import com.project.user_service.domain.entity.groups.ImageGroup;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -11,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface GroupRepository extends JpaRepository<Group , UUID> {
+public interface GroupRepository extends JpaRepository<Group, UUID> {
 
     @Query("SELECT new com.project.user_service.domain.dto.response.GroupResponseDto(" +
             "g.id, " +
@@ -26,4 +28,17 @@ public interface GroupRepository extends JpaRepository<Group , UUID> {
             "FROM Group g WHERE g.id = :id AND g.enable = true")
     Optional<GroupResponseDto> getGroupById(@Param("id") UUID id);
 
+    @Query("""
+                SELECT ig
+                FROM Group g
+                JOIN g.images ig
+                WHERE g.id = :id AND g.enable = true
+            """)
+    ImageGroup getGroupImageById(@Param("id") UUID id);
+
+    @Modifying
+    @Query(
+            "UPDATE Group g SET g.bio = :bio WHERE g.id = :id AND g.enable = true"
+    )
+    int updateTheBio(@Param("id") UUID id, @Param("bio") String bio);
 }

@@ -41,6 +41,9 @@ class GroupServiceTest {
     @InjectMocks
     private GroupService groupService;
 
+    @Mock
+    private KafkaService kafkaService;
+
     private Users user;
 
     private Group group1;
@@ -98,7 +101,8 @@ class GroupServiceTest {
             assertEquals(createGroupRequestDto.getGroupBio(), requestDto.getGroupBio());
             assertNotNull(requestDto.getId());
 
-            verify(redisService).set(eq(RedisMethod.GROUP_ + requestDto.getId().toString()), any(GroupResponseDto.class), anyLong());
+            verify(redisService).set(eq(RedisMethod.GROUP_ + requestDto.getId().toString()),
+                    any(GroupResponseDto.class), anyLong());
         }
 
         @Test
@@ -111,7 +115,7 @@ class GroupServiceTest {
                     .isInstanceOf(UserNotFoundException.class);
 
             verify(groupRepository, never()).save(any(Group.class));
-            verify(redisService , never()).set(any() , any() , anyLong());
+            verify(redisService, never()).set(any(), any(), anyLong());
         }
 
         @Test
@@ -141,7 +145,8 @@ class GroupServiceTest {
             assertNotNull(requestDto.getId());
 
             verify(groupRepository).save(any(Group.class));
-            verify(redisService).set(eq(RedisMethod.GROUP_ + requestDto.getId().toString()), any(GroupResponseDto.class), anyLong());
+            verify(redisService).set(eq(RedisMethod.GROUP_ + requestDto.getId().toString()),
+                    any(GroupResponseDto.class), anyLong());
         }
 
         @Test
@@ -161,7 +166,7 @@ class GroupServiceTest {
                     .isInstanceOf(IllegalArgumentException.class);
 
             verify(groupRepository, never()).save(any(Group.class));
-            verify(redisService , never()).set(any() , any() , anyLong());
+            verify(redisService, never()).set(any(), any(), anyLong());
         }
 
         @Test
@@ -181,7 +186,7 @@ class GroupServiceTest {
                     .isInstanceOf(IllegalArgumentException.class);
 
             verify(groupRepository, never()).save(any(Group.class));
-            verify(redisService , never()).set(any() , any() , anyLong());
+            verify(redisService, never()).set(any(), any(), anyLong());
         }
 
         @Test
@@ -201,7 +206,7 @@ class GroupServiceTest {
                     .hasMessageContaining("Failed to profile images");
 
             verify(groupRepository, never()).save(any(Group.class));
-            verify(redisService , never()).set(any() , any() , anyLong());
+            verify(redisService, never()).set(any(), any(), anyLong());
         }
 
         @Test
@@ -221,10 +226,9 @@ class GroupServiceTest {
                     .hasMessageContaining("Failed to background images");
 
             verify(groupRepository, never()).save(any(Group.class));
-            verify(redisService , never()).set(any() , any() , anyLong());
+            verify(redisService, never()).set(any(), any(), anyLong());
         }
     }
-
 
     @Nested
     @DisplayName("When Group Get Request")
@@ -232,8 +236,8 @@ class GroupServiceTest {
 
         @Test
         @DisplayName("Should get the User from the Database")
-        void testGetGroupFromDataBase(){
-            when(redisService.get(any() , any())).thenReturn(null);
+        void testGetGroupFromDataBase() {
+            when(redisService.get(any(), any())).thenReturn(null);
 
             GroupResponseDto groupResponseDto = GroupResponseDto
                     .builder()
@@ -247,10 +251,27 @@ class GroupServiceTest {
                     .build();
 
             when(groupRepository.getGroupById(groupResponseDto.getId())).thenReturn(Optional.of(groupResponseDto));
-            GroupResponseDto responseDto = groupService.getGroup(groupResponseDto.getId() , false);
+            GroupResponseDto responseDto = groupService.getGroup(groupResponseDto.getId(), false);
 
-            verify(redisService , times(1)).set(eq(RedisMethod.GROUP_ + groupResponseDto.getId().toString()) , any() , anyLong());
+            verify(redisService, times(1)).set(eq(RedisMethod.GROUP_ + groupResponseDto.getId().toString()), any(),
+                    anyLong());
             verify(groupRepository).getGroupById(groupResponseDto.getId());
         }
+
+        @Test
+        @DisplayName("Should throw an Exception For No Id")
+        void testGetGroupWithNoId() {
+            assertThatThrownBy(() -> groupService.getGroup(null, true)).isInstanceOf(IllegalArgumentException.class);
+
+            verify(redisService, never()).set(any(), any(), anyLong());
+            verify(groupRepository, never()).getGroupById(any());
+        }
+
+        @Test
+        @DisplayName("Should get User from the Redis ")
+        void testGetGroupFromTheRedis() {
+
+        }
+
     }
 }

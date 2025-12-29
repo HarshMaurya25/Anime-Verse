@@ -129,7 +129,6 @@ public class UserService {
         redisService.set(RedisMethod.USER_ + user.getId().toString(), responseDto, TIME_REDIS);
         kafkaService.saveIntoUserDatabase(user);
 
-
         return responseDto;
     }
 
@@ -190,17 +189,16 @@ public class UserService {
 
         validateProfileImage(file);
 
-        if(!userRepository.existsByIdAndEnableTrue(id)){
+        if (!userRepository.existsByIdAndEnableTrue(id)) {
             throw new UserNotFoundException("User : " + id.toString());
         }
 
         try {
             ImageUserEntity imageUserEntity = imageUserEntityRepository.findById(id)
-                            .orElseThrow(() -> new UserNotFoundException("Image " + id.toString()));
+                    .orElseThrow(() -> new UserNotFoundException("Image " + id.toString()));
 
             imageUserEntity.setImage(file.getBytes());
             imageUserEntity.setImageType(file.getContentType());
-
 
             imageUserEntityRepository.save(imageUserEntity);
 
@@ -215,7 +213,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserProfileResponseDto updateUserProfile(
+    public List<String> updateUserProfile(
             UUID id,
             UpdateUserProfileRequestDto dto) {
 
@@ -224,6 +222,8 @@ public class UserService {
         }
 
         List<String> updated = new ArrayList<>();
+        String displayName = null;
+        String bio = null;
 
         Users user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id.toString()));
@@ -234,10 +234,12 @@ public class UserService {
 
         if (dto.getDisplayName() != null) {
             user.setDisplayName(dto.getDisplayName());
+            displayName = user.getDisplayName();
             updated.add("Display Name");
         }
         if (dto.getBio() != null) {
             user.setBio(dto.getBio());
+            bio = user.getBio();
             updated.add("Bio");
         }
 
@@ -257,7 +259,11 @@ public class UserService {
 
         redisService.delete(RedisMethod.USER_ + user.getId().toString());
 
-        return getProfile(id);
+        if (displayName != null || bio != null) {
+            kafkaService.updateIntoUserDatabase(user.getId(), displayName, bio, user.getUsername());
+        }
+
+        return updated;
     }
 
     @Transactional
@@ -269,13 +275,13 @@ public class UserService {
 
         Users user = userRepository.findByIdAndEnableTrue(userId);
 
-        if(user == null){
+        if (user == null) {
             throw new UserNotFoundException(userId.toString());
         }
 
         Users targetUser = userRepository.findByIdAndEnableTrue(targetUserId);
 
-        if(targetUser == null){
+        if (targetUser == null) {
             throw new UserNotFoundException(userId.toString());
         }
 
@@ -287,8 +293,7 @@ public class UserService {
                 Follow.builder()
                         .follower(user)
                         .following(targetUser)
-                        .build()
-        );
+                        .build());
 
         redisService.delete(RedisMethod.USER_ + userId.toString());
         redisService.delete(RedisMethod.USER_ + targetUserId.toString());
@@ -296,19 +301,18 @@ public class UserService {
         log.info("User {} followed {}", userId, targetUserId);
     }
 
-
     @Transactional
     public void unfollowUser(UUID userId, UUID targetUserId) {
 
         Users user = userRepository.findByIdAndEnableTrue(userId);
 
-        if(user == null){
+        if (user == null) {
             throw new UserNotFoundException(userId.toString());
         }
 
         Users targetUser = userRepository.findByIdAndEnableTrue(targetUserId);
 
-        if(targetUser == null){
+        if (targetUser == null) {
             throw new UserNotFoundException(userId.toString());
         }
 
@@ -325,27 +329,27 @@ public class UserService {
     }
 
     @Transactional
-    public Page<GetFollowResponse> getFollowing(UUID id , int page){
-        if(id == null){
+    public Page<GetFollowResponse> getFollowing(UUID id, int page) {
+        if (id == null) {
             throw new IllegalArgumentException("ID");
         }
 
-        if(page < 0){
+        if (page < 0) {
             page = 0;
         }
 
-        Pageable pageable = PageRequest.of(page , PAGE_LIMIT);
+        Pageable pageable = PageRequest.of(page, PAGE_LIMIT);
 
         return followRepository.getFollowing(id, pageable);
     }
 
     @Transactional
-    public Page<GetFollowResponse> getFollower(UUID id , int page){
-        if(id == null){
+    public Page<GetFollowResponse> getFollower(UUID id, int page) {
+        if (id == null) {
             throw new IllegalArgumentException("ID");
         }
 
-        if(page < 0){
+        if (page < 0) {
             page = 0;
         }
 

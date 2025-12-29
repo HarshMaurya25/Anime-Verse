@@ -180,7 +180,7 @@ class UserServiceTest {
         @Test
         @DisplayName("Should throw exception for image too large")
         void testCreateUserWithImageTooLarge() {
-            byte[] largeImage = new byte[11 * 1024 * 1024]; // 11 MB
+            byte[] largeImage = new byte[6 * 1024 * 1024]; // 6 MB
             MockMultipartFile file = new MockMultipartFile(
                     "file",
                     "profile.jpg",
@@ -191,7 +191,7 @@ class UserServiceTest {
 
             assertThatThrownBy(() -> userService.createUser(createUserDto, file))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Profile image must be less than 10 MB");
+                    .hasMessageContaining("Profile image must be less than 5 MB");
         }
     }
 
@@ -213,7 +213,7 @@ class UserServiceTest {
             when(redisService.get(RedisMethod.USER_ + testUserId.toString(), UserProfileResponseDto.class))
                     .thenReturn(cachedProfile);
 
-            UserProfileResponseDto result = userService.getProfile(testUserId , false);
+            UserProfileResponseDto result = userService.getProfile(testUserId, false);
 
             assertThat(result).isEqualTo(cachedProfile);
             verify(redisService).set(eq(RedisMethod.USER_ + testUserId.toString()), any(UserProfileResponseDto.class),
@@ -236,9 +236,8 @@ class UserServiceTest {
 
             when(redisService.get(anyString(), eq(UserProfileResponseDto.class))).thenReturn(null);
             when(userRepository.getUserWithDetails(testUserId)).thenReturn(Optional.of(dbProfile));
-            when(imageUserEntityRepository.findById(testUserId)).thenReturn(Optional.of(imageUserEntity));
 
-            UserProfileResponseDto result = userService.getProfile(testUserId , false);
+            UserProfileResponseDto result = userService.getProfile(testUserId, false);
 
             assertThat(result).isNotNull();
             assertThat(result.getUsername()).isEqualTo("testuser");
@@ -252,7 +251,7 @@ class UserServiceTest {
             when(redisService.get(anyString(), eq(UserProfileResponseDto.class))).thenReturn(null);
             when(userRepository.getUserWithDetails(testUserId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> userService.getProfile(testUserId , false))
+            assertThatThrownBy(() -> userService.getProfile(testUserId, false))
                     .isInstanceOf(UserNotFoundException.class);
         }
     }
@@ -273,22 +272,20 @@ class UserServiceTest {
             when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(Users.class))).thenReturn(testUser);
 
-            UserProfileResponseDto mockProfile = UserProfileResponseDto.builder()
-                    .id(testUserId)
-                    .username("testuser")
-                    .displayName("New Display Name")
-                    .build();
-
-            when(redisService.get(anyString(), eq(UserProfileResponseDto.class))).thenReturn(mockProfile);
-
-            UserProfileResponseDto result = userService.updateUserProfile(testUserId, updateDto);
+            List<String> result = userService.updateUserProfile(testUserId, updateDto);
 
             assertThat(testUser.getDisplayName()).isEqualTo("New Display Name");
             assertThat(testUser.getBio()).isEqualTo("New bio");
             assertThat(testUser.getLocation()).isEqualTo("New Location");
+            assertThat(result).isNotNull()
+                    .hasSize(4)
+                    .contains("Display Name", "Bio", "Location", "Date of Birth");
 
+            verify(userRepository).findById(testUserId);
             verify(userRepository).save(testUser);
             verify(redisService).delete(RedisMethod.USER_ + testUserId.toString());
+            verify(kafkaService).updateIntoUserDatabase(eq(testUserId), eq("New Display Name"), eq("New bio"),
+                    eq("testuser"));
         }
 
         @Test
@@ -300,19 +297,19 @@ class UserServiceTest {
             when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(Users.class))).thenReturn(testUser);
 
-            UserProfileResponseDto mockProfile = UserProfileResponseDto.builder()
-                    .id(testUserId)
-                    .username("testuser")
-                    .displayName("New Display Name")
-                    .build();
-
-            when(redisService.get(anyString(), eq(UserProfileResponseDto.class))).thenReturn(mockProfile);
-
-            userService.updateUserProfile(testUserId, updateDto);
+            List<String> result = userService.updateUserProfile(testUserId, updateDto);
 
             assertThat(testUser.getDisplayName()).isEqualTo("New Display Name");
             assertThat(testUser.getBio()).isEqualTo("Test bio"); // Unchanged
+            assertThat(result).isNotNull()
+                    .hasSize(1)
+                    .contains("Display Name");
+
+            verify(userRepository).findById(testUserId);
             verify(userRepository).save(testUser);
+            verify(redisService).delete(RedisMethod.USER_ + testUserId.toString());
+            verify(kafkaService).updateIntoUserDatabase(eq(testUserId), eq("New Display Name"), isNull(),
+                    eq("testuser"));
         }
 
         @Test
@@ -515,12 +512,12 @@ class UserServiceTest {
             assertThat(result.getContent()).isEmpty();
 
         }
+
         @Test
         @DisplayName("Should throw exception for null user id in getFollowing")
-        void testGetFollowingNullId(){
+        void testGetFollowingNullId() {
             assertThatThrownBy(() -> userService.getFollowing(null, 0))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
 }
-

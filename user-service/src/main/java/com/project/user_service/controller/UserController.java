@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,8 +35,8 @@ public class UserController {
 
     @GetMapping("/profile/get")
     public ResponseEntity<UserProfileResponseDto> getUser(
-            @RequestParam UUID id , @RequestParam Boolean image) {
-        UserProfileResponseDto responseDto = userService.getProfile(id , image);
+            @RequestParam UUID id, @RequestParam Boolean image) {
+        UserProfileResponseDto responseDto = userService.getProfile(id, image);
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 
@@ -48,11 +49,11 @@ public class UserController {
 
     @PutMapping("/profile/update")
     @PreAuthorize("authentication.principal.id.equals(#id)")
-    public ResponseEntity<UserProfileResponseDto> updateProfile(
+    public ResponseEntity<List<String>> updateProfile(
             @RequestParam UUID id,
             @Valid @RequestBody UpdateUserProfileRequestDto requestDto) {
-        UserProfileResponseDto responseDto = userService.updateUserProfile(id, requestDto);
-        return ResponseEntity.ok().body(responseDto);
+        List<String> updated = userService.updateUserProfile(id, requestDto);
+        return ResponseEntity.ok().body(updated);
     }
 
     @PostMapping("/{userId}/follow/{targetId}")

@@ -1,5 +1,6 @@
 package com.project.user_service.service;
 
+import com.project.user_service.domain.dto.request.BioUpdateGroupRequestDto;
 import com.project.user_service.domain.dto.request.CreateGroupRequestDto;
 import com.project.user_service.domain.dto.response.GroupResponseDto;
 import com.project.user_service.domain.entity.groups.Group;
@@ -19,9 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -32,6 +31,7 @@ public class GroupService {
     private final UsersRepository usersRepository;
     private final RedisService redisService;
     private final ImageGroupRepository imageGroupRepository;
+    private final KafkaService kafkaService;
 
     private static final long MAX_IMAGE_SIZE = 5L * 1024 * 1024;
     private static final int PAGE_LIMIT = 10;
@@ -61,11 +61,11 @@ public class GroupService {
 
     @Transactional
     public GroupResponseDto createGroup(CreateGroupRequestDto requestDto,
-                                        MultipartFile profileImage,
-                                        MultipartFile bgImage) {
+            MultipartFile profileImage,
+            MultipartFile bgImage) {
 
         Users user = usersRepository.findByIdAndEnableTrue(requestDto.getLeaderId());
-        if(user == null) {
+        if (user == null) {
             throw new UserNotFoundException(requestDto.getLeaderId().toString());
         }
 
@@ -81,24 +81,24 @@ public class GroupService {
         String bgImageType = null;
 
         try {
-            if(profileImage != null && !profileImage.isEmpty()) {
+            if (profileImage != null && !profileImage.isEmpty()) {
                 validateProfileImage(profileImage);
                 profileImageBytes = profileImage.getBytes();
                 profileImageType = profileImage.getContentType();
             }
         } catch (IOException e) {
-            log.error("Image Upload of profile For Group Fail : {}" ,e.getMessage());
+            log.error("Image Upload of profile For Group Fail : {}", e.getMessage());
             throw new ImageUploadFailedException("Failed to profile images");
         }
 
-        try{
-            if(bgImage != null && !bgImage.isEmpty()) {
+        try {
+            if (bgImage != null && !bgImage.isEmpty()) {
                 validateProfileImage(bgImage);
                 bgImageBytes = bgImage.getBytes();
                 bgImageType = bgImage.getContentType();
             }
         } catch (IOException e) {
-            log.error("Image Upload of Background For Group Fail : {}" ,e.getMessage());
+            log.error("Image Upload of Background For Group Fail : {}", e.getMessage());
             throw new ImageUploadFailedException("Failed to background images");
         }
 
@@ -114,11 +114,10 @@ public class GroupService {
 
         user.getLeaderOfGroup().add(group);
 
-        log.info("Group is created by Id : {} and groupName : {} by leader : {} ({})" ,
-                group.getId().toString() , group.getGroupName() , user.getId().toString() , user.getUsername()
-                );
+        log.info("Group is created by Id : {} and groupName : {} by leader : {} ({})",
+                group.getId().toString(), group.getGroupName(), user.getId().toString(), user.getUsername());
 
-        GroupResponseDto responseDto =  GroupResponseDto
+        GroupResponseDto responseDto = GroupResponseDto
                 .builder()
                 .id(group.getId())
                 .groupName(group.getGroupName())
@@ -134,12 +133,17 @@ public class GroupService {
                 .bgImageType(imageGroup.getBgImageType())
                 .build();
 
-        redisService.set(RedisMethod.GROUP_ + group.getId().toString() , responseDto , TIME_REDIS);
+        kafkaService.saveIntoGroupDatabase(responseDto);
+
+        redisService.set(RedisMethod.GROUP_ + group.getId().toString(), responseDto, TIME_REDIS);
         return responseDto;
     }
 
-
     public GroupResponseDto getGroup(UUID id, Boolean giveImage) {
+        if (id == null) {
+            throw new IllegalArgumentException("Id can't be Null");
+        }
+
         GroupResponseDto groupResponseDto = redisService.get(id.toString(), GroupResponseDto.class);
         if (groupResponseDto != null) {
 
@@ -187,5 +191,78 @@ public class GroupService {
         return groupResponseDto;
     }
 
+    @Transactional
+    public List<String> updateImage(UUID id, MultipartFile profileImage, MultipartFile bgImage) {
+        if (id == null) {
+            log.error("Group can't update the image due to null id");
+            throw new GroupNotFoundException("Group Id cannot be null");
+        }
+        List<String> imageUpdate = new ArrayList<>();
+
+        ImageGroup imageGroup = groupRepository.getGroupImageById(id);
+        if (imageGroup == null) {
+            throw new GroupNotFoundException("Image not found for Group : " + id);
+        }
+
+        byte[] profileImageBytes = null;
+        byte[] bgImageBytes = null;
+        String profileImageType = null;
+        String bgImageType = null;
+
+        try {
+            if (profileImage != null && !profileImage.isEmpty()) {
+                validateProfileImage(profileImage);
+                profileImageBytes = profileImage.getBytes();
+                profileImageType = profileImage.getContentType();
+
+                imageGroup.setProfileImage(profileImageBytes);
+                imageGroup.setProfileImageType(profileImageType);
+                imageUpdate.add("Profile Image");
+            }
+        } catch (IOException e) {
+            log.error("Image Upload of profile For Group Fail : {}", e.getMessage());
+            throw new ImageUploadFailedException("Failed to profile images");
+        }
+
+        try {
+            if (bgImage != null && !bgImage.isEmpty()) {
+                validateProfileImage(bgImage);
+                bgImageBytes = bgImage.getBytes();
+                bgImageType = bgImage.getContentType();
+
+                imageGroup.setBgImage(bgImageBytes);
+                imageGroup.setBgImageType(bgImageType);
+
+                imageUpdate.add("Background Image");
+            }
+        } catch (IOException e) {
+            log.error("Image Upload of Background For Group Fail : {}", e.getMessage());
+            throw new ImageUploadFailedException("Failed to background images");
+        }
+
+        imageGroupRepository.save(imageGroup);
+        redisService.delete(RedisMethod.GROUP_ + id.toString());
+
+        log.info("Group : {} is updated with {}", id.toString(), imageUpdate.toString());
+        return imageUpdate;
+    }
+
+    @Transactional
+    public Boolean updateBio(BioUpdateGroupRequestDto requestDto){
+
+        if(requestDto.getId() == null || requestDto.getBio() == null){
+            throw new IllegalArgumentException("Request Missing Id or Bio");
+        }
+
+        int update = groupRepository.updateTheBio(requestDto.getId() , requestDto.getBio());
+
+        if(update == 0){
+            throw new GroupNotFoundException("Group : " + requestDto.getId().toString());
+        }
+        redisService.delete(RedisMethod.GROUP_ + requestDto.getId().toString());
+        log.info("Group : {} is updated their bio" , requestDto.getId().toString());
+
+        return true;
+    }
 
 }

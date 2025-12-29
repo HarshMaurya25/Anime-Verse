@@ -73,7 +73,7 @@ class KafkaServiceTest {
             assertThat(sentData.getType()).isEqualTo(KafkaDataTransferFields.USER_SAVE.toString());
 
             Map<String, String> dataMap = sentData.getMap();
-            assertThat(dataMap).containsEntry(KafkaDataTransferFields.ID.toString(), "1")
+            assertThat(dataMap).containsEntry(KafkaDataTransferFields.ID.toString(), testUser.getId().toString())
                     .containsEntry(KafkaDataTransferFields.USERNAME.toString(), "testuser")
                     .containsEntry(KafkaDataTransferFields.DISPLAY_NAME.toString(), "Test User")
                     .containsEntry(KafkaDataTransferFields.BIO.toString(), "Test Bio");
@@ -113,7 +113,7 @@ class KafkaServiceTest {
             verify(kafkaTemplate).send(eq("SaveUserDatabase"), dataTransferCaptor.capture());
 
             DataTransfer sentData = dataTransferCaptor.getValue();
-            assertThat(sentData.getMap()).containsEntry(KafkaDataTransferFields.BIO.toString(), "null");
+            assertThat(sentData.getMap()).containsEntry(KafkaDataTransferFields.BIO.toString(), null);
         }
 
         @Test

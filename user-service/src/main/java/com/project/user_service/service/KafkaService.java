@@ -1,6 +1,8 @@
 package com.project.user_service.service;
 
 import com.project.user_service.domain.dto.kafka.DataTransfer;
+import com.project.user_service.domain.dto.response.GroupResponseDto;
+import com.project.user_service.domain.entity.groups.Group;
 import com.project.user_service.domain.entity.users.Users;
 import com.project.user_service.domain.enums.KafkaDataTransferFields;
 import lombok.AllArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -41,5 +44,52 @@ public class KafkaService {
             log.error(e.getMessage());
         }
     }
+
+    public void updateIntoUserDatabase(UUID id , String displayName , String bio , String username){
+
+        Map<String , String> map = new HashMap<>();
+        map.put(KafkaDataTransferFields.ID.toString() , id.toString());
+        map.put(KafkaDataTransferFields.DISPLAY_NAME.toString() , displayName);
+        map.put(KafkaDataTransferFields.BIO.toString() , bio);
+
+        DataTransfer transfer = DataTransfer
+                .builder()
+                .type(KafkaDataTransferFields.USER_UPDATE.toString())
+                .map(map)
+                .build();
+
+        try {
+            kafkaTemplate.send(userTopic , transfer);
+            log.info("User is send with ID ; {} and Username : {} for Update" , id.toString() ,username );
+        }catch (Exception e){
+            log.error("User Failed to update with ID : {} and Username : {}" ,id.toString() ,username);
+            log.error(e.getMessage());
+        }
+    }
+
+    public void saveIntoGroupDatabase(GroupResponseDto group){
+
+        Map<String , String> map = new HashMap<>();
+        map.put(KafkaDataTransferFields.ID.toString() , group.getId().toString());
+        map.put(KafkaDataTransferFields.USERNAME.toString() , group.getGroupName());
+        map.put(KafkaDataTransferFields.BIO.toString() , group.getGroupBio());
+        map.put(KafkaDataTransferFields.LEADER_USERNAME.toString() , group.getLeaderUsername());
+        map.put(KafkaDataTransferFields.LEADER_DISPLAYNAME.toString(), group.getLeaderDisplayName());
+
+        DataTransfer transfer = DataTransfer
+                .builder()
+                .type(KafkaDataTransferFields.GROUP_SAVE.toString())
+                .map(map)
+                .build();
+
+        try {
+            kafkaTemplate.send(userTopic , transfer);
+            log.info("Group is send with ID ; {} and Username : {}" , group.getId().toString() , group.getGroupName());
+        }catch (Exception e){
+            log.error("Group saved is Failed with ID : {} and Username : {}" ,group.getId().toString() ,group.getGroupName());
+            log.error(e.getMessage());
+        }
+    }
+
 
 }
