@@ -248,21 +248,25 @@ public class GroupService {
     }
 
     @Transactional
-    public Boolean updateBio(BioUpdateGroupRequestDto requestDto){
+    public List<String> updateBio(BioUpdateGroupRequestDto requestDto) {
 
-        if(requestDto.getId() == null || requestDto.getBio() == null){
+        if (requestDto.getId() == null || requestDto.getBio() == null) {
             throw new IllegalArgumentException("Request Missing Id or Bio");
         }
 
-        int update = groupRepository.updateTheBio(requestDto.getId() , requestDto.getBio());
+        int update = groupRepository.updateTheBio(requestDto.getId(), requestDto.getBio());
 
-        if(update == 0){
+        if (update == 0) {
             throw new GroupNotFoundException("Group : " + requestDto.getId().toString());
         }
         redisService.delete(RedisMethod.GROUP_ + requestDto.getId().toString());
-        log.info("Group : {} is updated their bio" , requestDto.getId().toString());
+        log.info("Group : {} is updated their bio", requestDto.getId().toString());
 
-        return true;
+        kafkaService.updateIntoGroupDatabase(requestDto.getId(), null, requestDto.getBio(), null, null);
+
+        List<String> updated = new ArrayList<>();
+        updated.add("Bio");
+        return updated;
     }
 
 }

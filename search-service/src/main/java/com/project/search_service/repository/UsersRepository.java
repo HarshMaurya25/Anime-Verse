@@ -12,31 +12,33 @@ import org.springframework.data.repository.query.Param;
 import java.util.UUID;
 
 @EnableElasticsearchRepositories
-public interface UsersRepository extends ElasticsearchRepository<Users , String> {
+public interface UsersRepository extends ElasticsearchRepository<Users, String> {
 
-    @Query("""
-{
-  "bool": {
-    "should": [
+  @Query("""
       {
-        "multi_match": {
-          "query": "?0",
-          "fields": ["username^3", "display_name^2"],
-          "type": "phrase"
-        }
-      },
-      {
-        "multi_match": {
-          "query": "?0",
-          "fields": ["username^3", "display_name^2", "bio^1"],
-          "fuzziness": "AUTO"
+        "bool": {
+          "filter": [
+            { "term": { "enable": true } }
+          ],
+          "should": [
+            {
+              "multi_match": {
+                "query": "?0",
+                "fields": ["username^3", "display_name^2"],
+                "type": "phrase"
+              }
+            },
+            {
+              "multi_match": {
+                "query": "?0",
+                "fields": ["username^3", "display_name^2", "bio^1"],
+                "fuzziness": "AUTO"
+              }
+            }
+          ]
         }
       }
-    ]
-  }
-}
-""")
-    Page<UserSearchResponseDto> searchByKeyword(String keyword, Pageable pageable);
-
+      """)
+  Page<UserSearchResponseDto> searchByKeyword(String keyword, Pageable pageable);
 
 }

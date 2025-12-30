@@ -4,8 +4,11 @@ public enum KafkaDataTransferFields {
     USER_SAVE,
     USER_UPDATE,
     GROUP_SAVE,
+    GROUP_UPDATE,
     ID,
     USERNAME,
     DISPLAY_NAME,
-    BIO
+    BIO,
+    LEADER_USERNAME,
+    LEADER_DISPLAYNAME
 }

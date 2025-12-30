@@ -23,7 +23,9 @@ public class KafkaConsumers {
             kafkaService.createUser(transfer);
         } else if (transfer.getType().equals(KafkaDataTransferFields.USER_UPDATE.toString())) {
             kafkaService.updateUser(transfer);
-        } else {
+        } else if (transfer.getType().equals(KafkaDataTransferFields.GROUP_SAVE.toString())) {
+            kafkaService.saveGroup(transfer);
+        }else {
             log.info("The Kafka Field is Undefined with type : {}", transfer.getType());
         }
     }

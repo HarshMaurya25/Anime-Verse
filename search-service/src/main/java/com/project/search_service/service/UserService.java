@@ -31,6 +31,7 @@ public class UserService {
                 .username(requestDto.getUsername())
                 .displayName(requestDto.getDisplayName())
                 .bio(requestDto.getBio())
+                .enable(true)
                 .build();
 
         log.info("User with id : {} and username : {} is Created" , users.getId().toString() , users.getUsername());

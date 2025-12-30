@@ -1,7 +1,9 @@
 package com.project.search_service.controller;
 
 import com.project.search_service.domain.dto.UserSearchResponseDto;
+import com.project.search_service.domain.dto.GroupSearchResponseDto;
 import com.project.search_service.service.UserService;
+import com.project.search_service.service.GroupService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -17,14 +19,21 @@ import java.util.Set;
 public class SearchController {
 
     private final UserService userService;
+    private final GroupService groupService;
 
     @GetMapping("/user/get")
-    private ResponseEntity<Set<UserSearchResponseDto>> searchUser(
-            @RequestParam int page, @RequestParam String keyword
-            ){
-        Page<UserSearchResponseDto> responseDtos = userService.searchUser(keyword , page);
+    private ResponseEntity<Page<UserSearchResponseDto>> searchUser(
+            @RequestParam int page, @RequestParam String keyword) {
+        Page<UserSearchResponseDto> responseDtos = userService.searchUser(keyword, page);
 
-        return new ResponseEntity<>(responseDtos.toSet() , HttpStatus.OK);
+        return new ResponseEntity<>(responseDtos, HttpStatus.OK);
+    }
+
+    @GetMapping("/group/get")
+    private ResponseEntity<Set<GroupSearchResponseDto>> searchGroup(
+            @RequestParam int page, @RequestParam String keyword) {
+        Page<GroupSearchResponseDto> responseDtos = groupService.searchGroup(keyword, page);
+        return new ResponseEntity<>(responseDtos.toSet(), HttpStatus.OK);
     }
 
 }
