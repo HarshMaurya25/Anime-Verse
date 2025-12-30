@@ -1,0 +1,235 @@
+{
+  "version": "39.0.0",
+  "artifacts": {
+    "localstack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/unknown-region",
+      "properties": {
+        "templateFile": "localstack.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}"
+      },
+      "metadata": {
+        "/localstack/AnimeVerseVPC/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPC9F6762D3"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet1/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet1SubnetDC370151"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet1/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet1RouteTable57F85575"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet1/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet1RouteTableAssociationA5C77D1E"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet1/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet1DefaultRoute713A12A0"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet1/EIP": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet1EIPB535ABF2"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet1/NATGateway": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet1NATGatewayF01669A6"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet2/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet2SubnetF5B9380D"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet2/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet2RouteTableB5DDC601"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet2/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet2RouteTableAssociationF526CA6B"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet2/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet2DefaultRoute717DFA33"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet2/EIP": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet2EIP7855594F"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PublicSubnet2/NATGateway": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPublicSubnet2NATGateway8253C3D6"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet1/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet1SubnetEF1A347D"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet1/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet1RouteTableEFB84B5A"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet1/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet1RouteTableAssociationE951B947"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet1/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet1DefaultRoute89E7E79A"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet2/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet2Subnet5023AB71"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet2/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet2RouteTable3278CD98"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet2/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet2RouteTableAssociation85823F86"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/PrivateSubnet2/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCPrivateSubnet2DefaultRouteEA1461B8"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/IGW": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCIGW1758BB8C"
+          }
+        ],
+        "/localstack/AnimeVerseVPC/VPCGW": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AnimeVerseVPCVPCGWD92B2869"
+          }
+        ],
+        "/localstack/AuthServiceDB/SubnetGroup/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthServiceDBSubnetGroupCFE5A552"
+          }
+        ],
+        "/localstack/AuthServiceDB/SecurityGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthServiceDBSecurityGroupBE6D28EB"
+          }
+        ],
+        "/localstack/AuthServiceDB/Secret/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "localstackAuthServiceDBSecretE93C53FD3fdaad7efa858a3daf9490cf0a702aeb"
+          }
+        ],
+        "/localstack/AuthServiceDB/Secret/Attachment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthServiceDBSecretAttachmentF30406A9"
+          }
+        ],
+        "/localstack/AuthServiceDB/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthServiceDBC6B688BA"
+          }
+        ],
+        "/localstack/ProfileServiceDB/SubnetGroup/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProfileServiceDBSubnetGroupB0052912"
+          }
+        ],
+        "/localstack/ProfileServiceDB/SecurityGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProfileServiceDBSecurityGroup29B27103"
+          }
+        ],
+        "/localstack/ProfileServiceDB/Secret/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "localstackProfileServiceDBSecretBFF158B13fdaad7efa858a3daf9490cf0a702aeb"
+          }
+        ],
+        "/localstack/ProfileServiceDB/Secret/Attachment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProfileServiceDBSecretAttachmentBC0087A7"
+          }
+        ],
+        "/localstack/ProfileServiceDB/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProfileServiceDB7B759CD2"
+          }
+        ],
+        "/localstack/AuthServiceDBHealthCheck": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthServiceDBHealthCheck"
+          }
+        ],
+        "/localstack/ProfileServiceDBHealthCheck": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProfileServiceDBHealthCheck"
+          }
+        ]
+      },
+      "displayName": "localstack"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  }
+}

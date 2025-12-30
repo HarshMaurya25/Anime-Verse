@@ -1,0 +1,1133 @@
+{
+  "version": "tree-0.1",
+  "tree": {
+    "id": "App",
+    "path": "",
+    "children": {
+      "localstack": {
+        "id": "localstack",
+        "path": "localstack",
+        "children": {
+          "AnimeVerseVPC": {
+            "id": "AnimeVerseVPC",
+            "path": "localstack/AnimeVerseVPC",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/AnimeVerseVPC/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::EC2::VPC",
+                  "aws:cdk:cloudformation:props": {
+                    "cidrBlock": "10.0.0.0/16",
+                    "enableDnsHostnames": true,
+                    "enableDnsSupport": true,
+                    "instanceTenancy": "default",
+                    "tags": [
+                      {
+                        "key": "Name",
+                        "value": "AnimeVerseVPC"
+                      }
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.CfnVPC",
+                  "version": "2.178.1"
+                }
+              },
+              "PublicSubnet1": {
+                "id": "PublicSubnet1",
+                "path": "localstack/AnimeVerseVPC/PublicSubnet1",
+                "children": {
+                  "Subnet": {
+                    "id": "Subnet",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet1/Subnet",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Subnet",
+                      "aws:cdk:cloudformation:props": {
+                        "availabilityZone": {
+                          "Fn::Select": [
+                            0,
+                            {
+                              "Fn::GetAZs": ""
+                            }
+                          ]
+                        },
+                        "cidrBlock": "10.0.0.0/18",
+                        "mapPublicIpOnLaunch": true,
+                        "tags": [
+                          {
+                            "key": "aws-cdk:subnet-name",
+                            "value": "Public"
+                          },
+                          {
+                            "key": "aws-cdk:subnet-type",
+                            "value": "Public"
+                          },
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnet",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "Acl": {
+                    "id": "Acl",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet1/Acl",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "RouteTable": {
+                    "id": "RouteTable",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet1/RouteTable",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::RouteTable",
+                      "aws:cdk:cloudformation:props": {
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRouteTable",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "RouteTableAssociation": {
+                    "id": "RouteTableAssociation",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet1/RouteTableAssociation",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SubnetRouteTableAssociation",
+                      "aws:cdk:cloudformation:props": {
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet1RouteTable57F85575"
+                        },
+                        "subnetId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet1SubnetDC370151"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnetRouteTableAssociation",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultRoute": {
+                    "id": "DefaultRoute",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet1/DefaultRoute",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Route",
+                      "aws:cdk:cloudformation:props": {
+                        "destinationCidrBlock": "0.0.0.0/0",
+                        "gatewayId": {
+                          "Ref": "AnimeVerseVPCIGW1758BB8C"
+                        },
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet1RouteTable57F85575"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRoute",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "EIP": {
+                    "id": "EIP",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet1/EIP",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::EIP",
+                      "aws:cdk:cloudformation:props": {
+                        "domain": "vpc",
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet1"
+                          }
+                        ]
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnEIP",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "NATGateway": {
+                    "id": "NATGateway",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet1/NATGateway",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::NatGateway",
+                      "aws:cdk:cloudformation:props": {
+                        "allocationId": {
+                          "Fn::GetAtt": [
+                            "AnimeVerseVPCPublicSubnet1EIPB535ABF2",
+                            "AllocationId"
+                          ]
+                        },
+                        "subnetId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet1SubnetDC370151"
+                        },
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet1"
+                          }
+                        ]
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnNatGateway",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.PublicSubnet",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "PublicSubnet2": {
+                "id": "PublicSubnet2",
+                "path": "localstack/AnimeVerseVPC/PublicSubnet2",
+                "children": {
+                  "Subnet": {
+                    "id": "Subnet",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet2/Subnet",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Subnet",
+                      "aws:cdk:cloudformation:props": {
+                        "availabilityZone": {
+                          "Fn::Select": [
+                            1,
+                            {
+                              "Fn::GetAZs": ""
+                            }
+                          ]
+                        },
+                        "cidrBlock": "10.0.64.0/18",
+                        "mapPublicIpOnLaunch": true,
+                        "tags": [
+                          {
+                            "key": "aws-cdk:subnet-name",
+                            "value": "Public"
+                          },
+                          {
+                            "key": "aws-cdk:subnet-type",
+                            "value": "Public"
+                          },
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet2"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnet",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "Acl": {
+                    "id": "Acl",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet2/Acl",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "RouteTable": {
+                    "id": "RouteTable",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet2/RouteTable",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::RouteTable",
+                      "aws:cdk:cloudformation:props": {
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet2"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRouteTable",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "RouteTableAssociation": {
+                    "id": "RouteTableAssociation",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet2/RouteTableAssociation",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SubnetRouteTableAssociation",
+                      "aws:cdk:cloudformation:props": {
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet2RouteTableB5DDC601"
+                        },
+                        "subnetId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet2SubnetF5B9380D"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnetRouteTableAssociation",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultRoute": {
+                    "id": "DefaultRoute",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet2/DefaultRoute",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Route",
+                      "aws:cdk:cloudformation:props": {
+                        "destinationCidrBlock": "0.0.0.0/0",
+                        "gatewayId": {
+                          "Ref": "AnimeVerseVPCIGW1758BB8C"
+                        },
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet2RouteTableB5DDC601"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRoute",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "EIP": {
+                    "id": "EIP",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet2/EIP",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::EIP",
+                      "aws:cdk:cloudformation:props": {
+                        "domain": "vpc",
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet2"
+                          }
+                        ]
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnEIP",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "NATGateway": {
+                    "id": "NATGateway",
+                    "path": "localstack/AnimeVerseVPC/PublicSubnet2/NATGateway",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::NatGateway",
+                      "aws:cdk:cloudformation:props": {
+                        "allocationId": {
+                          "Fn::GetAtt": [
+                            "AnimeVerseVPCPublicSubnet2EIP7855594F",
+                            "AllocationId"
+                          ]
+                        },
+                        "subnetId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet2SubnetF5B9380D"
+                        },
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PublicSubnet2"
+                          }
+                        ]
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnNatGateway",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.PublicSubnet",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "PrivateSubnet1": {
+                "id": "PrivateSubnet1",
+                "path": "localstack/AnimeVerseVPC/PrivateSubnet1",
+                "children": {
+                  "Subnet": {
+                    "id": "Subnet",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet1/Subnet",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Subnet",
+                      "aws:cdk:cloudformation:props": {
+                        "availabilityZone": {
+                          "Fn::Select": [
+                            0,
+                            {
+                              "Fn::GetAZs": ""
+                            }
+                          ]
+                        },
+                        "cidrBlock": "10.0.128.0/18",
+                        "mapPublicIpOnLaunch": false,
+                        "tags": [
+                          {
+                            "key": "aws-cdk:subnet-name",
+                            "value": "Private"
+                          },
+                          {
+                            "key": "aws-cdk:subnet-type",
+                            "value": "Private"
+                          },
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PrivateSubnet1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnet",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "Acl": {
+                    "id": "Acl",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet1/Acl",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "RouteTable": {
+                    "id": "RouteTable",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet1/RouteTable",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::RouteTable",
+                      "aws:cdk:cloudformation:props": {
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PrivateSubnet1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRouteTable",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "RouteTableAssociation": {
+                    "id": "RouteTableAssociation",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet1/RouteTableAssociation",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SubnetRouteTableAssociation",
+                      "aws:cdk:cloudformation:props": {
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPrivateSubnet1RouteTableEFB84B5A"
+                        },
+                        "subnetId": {
+                          "Ref": "AnimeVerseVPCPrivateSubnet1SubnetEF1A347D"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnetRouteTableAssociation",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultRoute": {
+                    "id": "DefaultRoute",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet1/DefaultRoute",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Route",
+                      "aws:cdk:cloudformation:props": {
+                        "destinationCidrBlock": "0.0.0.0/0",
+                        "natGatewayId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet1NATGatewayF01669A6"
+                        },
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPrivateSubnet1RouteTableEFB84B5A"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRoute",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.PrivateSubnet",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "PrivateSubnet2": {
+                "id": "PrivateSubnet2",
+                "path": "localstack/AnimeVerseVPC/PrivateSubnet2",
+                "children": {
+                  "Subnet": {
+                    "id": "Subnet",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet2/Subnet",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Subnet",
+                      "aws:cdk:cloudformation:props": {
+                        "availabilityZone": {
+                          "Fn::Select": [
+                            1,
+                            {
+                              "Fn::GetAZs": ""
+                            }
+                          ]
+                        },
+                        "cidrBlock": "10.0.192.0/18",
+                        "mapPublicIpOnLaunch": false,
+                        "tags": [
+                          {
+                            "key": "aws-cdk:subnet-name",
+                            "value": "Private"
+                          },
+                          {
+                            "key": "aws-cdk:subnet-type",
+                            "value": "Private"
+                          },
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PrivateSubnet2"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnet",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "Acl": {
+                    "id": "Acl",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet2/Acl",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "RouteTable": {
+                    "id": "RouteTable",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet2/RouteTable",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::RouteTable",
+                      "aws:cdk:cloudformation:props": {
+                        "tags": [
+                          {
+                            "key": "Name",
+                            "value": "localstack/AnimeVerseVPC/PrivateSubnet2"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRouteTable",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "RouteTableAssociation": {
+                    "id": "RouteTableAssociation",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet2/RouteTableAssociation",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SubnetRouteTableAssociation",
+                      "aws:cdk:cloudformation:props": {
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPrivateSubnet2RouteTable3278CD98"
+                        },
+                        "subnetId": {
+                          "Ref": "AnimeVerseVPCPrivateSubnet2Subnet5023AB71"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSubnetRouteTableAssociation",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultRoute": {
+                    "id": "DefaultRoute",
+                    "path": "localstack/AnimeVerseVPC/PrivateSubnet2/DefaultRoute",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::Route",
+                      "aws:cdk:cloudformation:props": {
+                        "destinationCidrBlock": "0.0.0.0/0",
+                        "natGatewayId": {
+                          "Ref": "AnimeVerseVPCPublicSubnet2NATGateway8253C3D6"
+                        },
+                        "routeTableId": {
+                          "Ref": "AnimeVerseVPCPrivateSubnet2RouteTable3278CD98"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnRoute",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.PrivateSubnet",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "IGW": {
+                "id": "IGW",
+                "path": "localstack/AnimeVerseVPC/IGW",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::EC2::InternetGateway",
+                  "aws:cdk:cloudformation:props": {
+                    "tags": [
+                      {
+                        "key": "Name",
+                        "value": "AnimeVerseVPC"
+                      }
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.CfnInternetGateway",
+                  "version": "2.178.1"
+                }
+              },
+              "VPCGW": {
+                "id": "VPCGW",
+                "path": "localstack/AnimeVerseVPC/VPCGW",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::EC2::VPCGatewayAttachment",
+                  "aws:cdk:cloudformation:props": {
+                    "internetGatewayId": {
+                      "Ref": "AnimeVerseVPCIGW1758BB8C"
+                    },
+                    "vpcId": {
+                      "Ref": "AnimeVerseVPC9F6762D3"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.CfnVPCGatewayAttachment",
+                  "version": "2.178.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ec2.Vpc",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AuthServiceDB": {
+            "id": "AuthServiceDB",
+            "path": "localstack/AuthServiceDB",
+            "children": {
+              "SubnetGroup": {
+                "id": "SubnetGroup",
+                "path": "localstack/AuthServiceDB/SubnetGroup",
+                "children": {
+                  "Default": {
+                    "id": "Default",
+                    "path": "localstack/AuthServiceDB/SubnetGroup/Default",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::RDS::DBSubnetGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "dbSubnetGroupDescription": "Subnet group for AuthServiceDB database",
+                        "subnetIds": [
+                          {
+                            "Ref": "AnimeVerseVPCPrivateSubnet1SubnetEF1A347D"
+                          },
+                          {
+                            "Ref": "AnimeVerseVPCPrivateSubnet2Subnet5023AB71"
+                          }
+                        ]
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_rds.CfnDBSubnetGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_rds.SubnetGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "SecurityGroup": {
+                "id": "SecurityGroup",
+                "path": "localstack/AuthServiceDB/SecurityGroup",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AuthServiceDB/SecurityGroup/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "groupDescription": "Security group for AuthServiceDB database",
+                        "securityGroupEgress": [
+                          {
+                            "cidrIp": "0.0.0.0/0",
+                            "description": "Allow all outbound traffic by default",
+                            "ipProtocol": "-1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSecurityGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.SecurityGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Secret": {
+                "id": "Secret",
+                "path": "localstack/AuthServiceDB/Secret",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AuthServiceDB/Secret/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::SecretsManager::Secret",
+                      "aws:cdk:cloudformation:props": {
+                        "description": {
+                          "Fn::Join": [
+                            "",
+                            [
+                              "Generated by the CDK for stack: ",
+                              {
+                                "Ref": "AWS::StackName"
+                              }
+                            ]
+                          ]
+                        },
+                        "generateSecretString": {
+                          "passwordLength": 30,
+                          "secretStringTemplate": "{\"username\":\"admin_user\"}",
+                          "generateStringKey": "password",
+                          "excludeCharacters": " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_secretsmanager.CfnSecret",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "Attachment": {
+                    "id": "Attachment",
+                    "path": "localstack/AuthServiceDB/Secret/Attachment",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "localstack/AuthServiceDB/Secret/Attachment/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::SecretsManager::SecretTargetAttachment",
+                          "aws:cdk:cloudformation:props": {
+                            "secretId": {
+                              "Ref": "localstackAuthServiceDBSecretE93C53FD3fdaad7efa858a3daf9490cf0a702aeb"
+                            },
+                            "targetId": {
+                              "Ref": "AuthServiceDBC6B688BA"
+                            },
+                            "targetType": "AWS::RDS::DBInstance"
+                          }
+                        },
+                        "constructInfo": {
+                          "fqn": "aws-cdk-lib.aws_secretsmanager.CfnSecretTargetAttachment",
+                          "version": "2.178.1"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_secretsmanager.SecretTargetAttachment",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_rds.DatabaseSecret",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/AuthServiceDB/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::RDS::DBInstance",
+                  "aws:cdk:cloudformation:props": {
+                    "allocatedStorage": "20",
+                    "copyTagsToSnapshot": true,
+                    "dbInstanceClass": "db.t2.micro",
+                    "dbName": "auth-database",
+                    "dbSubnetGroupName": {
+                      "Ref": "AuthServiceDBSubnetGroupCFE5A552"
+                    },
+                    "engine": "postgres",
+                    "engineVersion": "17.2",
+                    "masterUsername": "admin_user",
+                    "masterUserPassword": {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "{{resolve:secretsmanager:",
+                          {
+                            "Ref": "localstackAuthServiceDBSecretE93C53FD3fdaad7efa858a3daf9490cf0a702aeb"
+                          },
+                          ":SecretString:password::}}"
+                        ]
+                      ]
+                    },
+                    "storageType": "gp2",
+                    "vpcSecurityGroups": [
+                      {
+                        "Fn::GetAtt": [
+                          "AuthServiceDBSecurityGroupBE6D28EB",
+                          "GroupId"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_rds.CfnDBInstance",
+                  "version": "2.178.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_rds.DatabaseInstance",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "ProfileServiceDB": {
+            "id": "ProfileServiceDB",
+            "path": "localstack/ProfileServiceDB",
+            "children": {
+              "SubnetGroup": {
+                "id": "SubnetGroup",
+                "path": "localstack/ProfileServiceDB/SubnetGroup",
+                "children": {
+                  "Default": {
+                    "id": "Default",
+                    "path": "localstack/ProfileServiceDB/SubnetGroup/Default",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::RDS::DBSubnetGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "dbSubnetGroupDescription": "Subnet group for ProfileServiceDB database",
+                        "subnetIds": [
+                          {
+                            "Ref": "AnimeVerseVPCPrivateSubnet1SubnetEF1A347D"
+                          },
+                          {
+                            "Ref": "AnimeVerseVPCPrivateSubnet2Subnet5023AB71"
+                          }
+                        ]
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_rds.CfnDBSubnetGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_rds.SubnetGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "SecurityGroup": {
+                "id": "SecurityGroup",
+                "path": "localstack/ProfileServiceDB/SecurityGroup",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/ProfileServiceDB/SecurityGroup/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "groupDescription": "Security group for ProfileServiceDB database",
+                        "securityGroupEgress": [
+                          {
+                            "cidrIp": "0.0.0.0/0",
+                            "description": "Allow all outbound traffic by default",
+                            "ipProtocol": "-1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "AnimeVerseVPC9F6762D3"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSecurityGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.SecurityGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Secret": {
+                "id": "Secret",
+                "path": "localstack/ProfileServiceDB/Secret",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/ProfileServiceDB/Secret/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::SecretsManager::Secret",
+                      "aws:cdk:cloudformation:props": {
+                        "description": {
+                          "Fn::Join": [
+                            "",
+                            [
+                              "Generated by the CDK for stack: ",
+                              {
+                                "Ref": "AWS::StackName"
+                              }
+                            ]
+                          ]
+                        },
+                        "generateSecretString": {
+                          "passwordLength": 30,
+                          "secretStringTemplate": "{\"username\":\"admin_user\"}",
+                          "generateStringKey": "password",
+                          "excludeCharacters": " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_secretsmanager.CfnSecret",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "Attachment": {
+                    "id": "Attachment",
+                    "path": "localstack/ProfileServiceDB/Secret/Attachment",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "localstack/ProfileServiceDB/Secret/Attachment/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::SecretsManager::SecretTargetAttachment",
+                          "aws:cdk:cloudformation:props": {
+                            "secretId": {
+                              "Ref": "localstackProfileServiceDBSecretBFF158B13fdaad7efa858a3daf9490cf0a702aeb"
+                            },
+                            "targetId": {
+                              "Ref": "ProfileServiceDB7B759CD2"
+                            },
+                            "targetType": "AWS::RDS::DBInstance"
+                          }
+                        },
+                        "constructInfo": {
+                          "fqn": "aws-cdk-lib.aws_secretsmanager.CfnSecretTargetAttachment",
+                          "version": "2.178.1"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_secretsmanager.SecretTargetAttachment",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_rds.DatabaseSecret",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/ProfileServiceDB/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::RDS::DBInstance",
+                  "aws:cdk:cloudformation:props": {
+                    "allocatedStorage": "20",
+                    "copyTagsToSnapshot": true,
+                    "dbInstanceClass": "db.t2.micro",
+                    "dbName": "user-database",
+                    "dbSubnetGroupName": {
+                      "Ref": "ProfileServiceDBSubnetGroupB0052912"
+                    },
+                    "engine": "postgres",
+                    "engineVersion": "17.2",
+                    "masterUsername": "admin_user",
+                    "masterUserPassword": {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "{{resolve:secretsmanager:",
+                          {
+                            "Ref": "localstackProfileServiceDBSecretBFF158B13fdaad7efa858a3daf9490cf0a702aeb"
+                          },
+                          ":SecretString:password::}}"
+                        ]
+                      ]
+                    },
+                    "storageType": "gp2",
+                    "vpcSecurityGroups": [
+                      {
+                        "Fn::GetAtt": [
+                          "ProfileServiceDBSecurityGroup29B27103",
+                          "GroupId"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_rds.CfnDBInstance",
+                  "version": "2.178.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_rds.DatabaseInstance",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AuthServiceDBHealthCheck": {
+            "id": "AuthServiceDBHealthCheck",
+            "path": "localstack/AuthServiceDBHealthCheck",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::Route53::HealthCheck",
+              "aws:cdk:cloudformation:props": {
+                "healthCheckConfig": {
+                  "type": "TCP",
+                  "failureThreshold": 3,
+                  "ipAddress": {
+                    "Fn::GetAtt": [
+                      "AuthServiceDBC6B688BA",
+                      "Endpoint.Address"
+                    ]
+                  },
+                  "port": {
+                    "Fn::GetAtt": [
+                      "AuthServiceDBC6B688BA",
+                      "Endpoint.Port"
+                    ]
+                  },
+                  "requestInterval": 30
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_route53.CfnHealthCheck",
+              "version": "2.178.1"
+            }
+          },
+          "ProfileServiceDBHealthCheck": {
+            "id": "ProfileServiceDBHealthCheck",
+            "path": "localstack/ProfileServiceDBHealthCheck",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::Route53::HealthCheck",
+              "aws:cdk:cloudformation:props": {
+                "healthCheckConfig": {
+                  "type": "TCP",
+                  "failureThreshold": 3,
+                  "ipAddress": {
+                    "Fn::GetAtt": [
+                      "ProfileServiceDB7B759CD2",
+                      "Endpoint.Address"
+                    ]
+                  },
+                  "port": {
+                    "Fn::GetAtt": [
+                      "ProfileServiceDB7B759CD2",
+                      "Endpoint.Port"
+                    ]
+                  },
+                  "requestInterval": 30
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_route53.CfnHealthCheck",
+              "version": "2.178.1"
+            }
+          }
+        },
+        "constructInfo": {
+          "fqn": "aws-cdk-lib.Stack",
+          "version": "2.178.1"
+        }
+      },
+      "Tree": {
+        "id": "Tree",
+        "path": "Tree",
+        "constructInfo": {
+          "fqn": "constructs.Construct",
+          "version": "10.4.4"
+        }
+      }
+    },
+    "constructInfo": {
+      "fqn": "aws-cdk-lib.App",
+      "version": "2.178.1"
+    }
+  }
+}
