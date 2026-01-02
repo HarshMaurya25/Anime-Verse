@@ -32,7 +32,6 @@ spring:
       properties:
         spring.json.add.type.headers: false
 
-
 server:
   port: 11113
 

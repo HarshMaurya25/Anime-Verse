@@ -24,7 +24,7 @@ public class UserService {
     private static final int PAGE_LENGTH = 12;
 
     @Transactional
-    public void createUser(SearchUserDto requestDto){
+    public void createUser(SearchUserDto requestDto) {
         Users users = Users
                 .builder()
                 .id(requestDto.getId().toString())
@@ -34,47 +34,47 @@ public class UserService {
                 .enable(true)
                 .build();
 
-        log.info("User with id : {} and username : {} is Created" , users.getId().toString() , users.getUsername());
+        log.info("User with id : {} and username : {} is Created", users.getId().toString(), users.getUsername());
         usersRepository.save(users);
     }
 
     @Transactional
-    public void updateUser(SearchUserDto requestDto){
+    public void updateUser(SearchUserDto requestDto) {
         Users user = usersRepository.findById(requestDto.getId().toString()).orElse(null);
 
-        if(user == null){
-            log.info("User : {} not found" , requestDto.getId());
+        if (user == null) {
+            log.info("User : {} not found", requestDto.getId());
             return;
         }
 
         List<String> updated = new ArrayList<>();
 
-        if (requestDto.getUsername() != null){
+        if (requestDto.getUsername() != null) {
             user.setUsername(requestDto.getUsername());
             updated.add("Username");
         }
 
-        if(requestDto.getDisplayName() != null){
+        if (requestDto.getDisplayName() != null) {
             user.setDisplayName(requestDto.getDisplayName());
             updated.add("Display Name");
         }
 
-        if(requestDto.getBio() != null){
+        if (requestDto.getBio() != null) {
             user.setBio(requestDto.getBio());
             updated.add("Bio");
         }
 
         usersRepository.save(user);
-        log.info("User : {} ({}) update : {}" , user.getId() , user.getUsername(), updated.toString());
+        log.info("User : {} ({}) update : {}", user.getId(), user.getUsername(), updated.toString());
     }
 
-    public Page<UserSearchResponseDto> searchUser(String keyword , int page){
+    public Page<UserSearchResponseDto> searchUser(String keyword, int page) {
 
-        if(page < 0){
-            page = 1;
+        if (page < 0) {
+            page = 0;
         }
-        Pageable pageable = PageRequest.of(page , PAGE_LENGTH);
-        return usersRepository.searchByKeyword(keyword , pageable);
+        Pageable pageable = PageRequest.of(page, PAGE_LENGTH);
+        return usersRepository.searchByKeyword(keyword, pageable);
     }
 
 }

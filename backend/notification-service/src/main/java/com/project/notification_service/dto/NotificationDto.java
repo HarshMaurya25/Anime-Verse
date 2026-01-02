@@ -2,6 +2,8 @@ package com.project.notification_service.dto;
 
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @Builder

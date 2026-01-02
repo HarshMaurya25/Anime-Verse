@@ -52,6 +52,13 @@ spring:
               filters:
                 - StripPrefix=2
 
+            - id: content-service-api-docs
+              uri: http://content-service:11115
+              predicates:
+                - Path=/api/content/v3/**
+              filters:
+                - StripPrefix=2
+
             - id: user-service
               uri: http://user-service:11113
               predicates:
@@ -64,6 +71,14 @@ spring:
               uri: http://search-service:11114
               predicates:
                 - Path=/api/search/**
+              filters:
+                - StripPrefix=2
+                - JwtValidation
+
+            - id: content-service
+              uri: http://content-service:11115
+              predicates:
+                - Path=/api/content/**
               filters:
                 - StripPrefix=2
                 - JwtValidation

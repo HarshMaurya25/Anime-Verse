@@ -30,10 +30,10 @@ public class SearchController {
     }
 
     @GetMapping("/group/get")
-    private ResponseEntity<Set<GroupSearchResponseDto>> searchGroup(
+    private ResponseEntity<Page<GroupSearchResponseDto>> searchGroup(
             @RequestParam int page, @RequestParam String keyword) {
         Page<GroupSearchResponseDto> responseDtos = groupService.searchGroup(keyword, page);
-        return new ResponseEntity<>(responseDtos.toSet(), HttpStatus.OK);
+        return new ResponseEntity<>(responseDtos, HttpStatus.OK);
     }
 
 }

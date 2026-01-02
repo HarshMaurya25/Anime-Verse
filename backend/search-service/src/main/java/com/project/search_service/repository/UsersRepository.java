@@ -35,7 +35,8 @@ public interface UsersRepository extends ElasticsearchRepository<Users, String> 
                 "fuzziness": "AUTO"
               }
             }
-          ]
+          ],
+          "minimum_should_match": 1
         }
       }
       """)

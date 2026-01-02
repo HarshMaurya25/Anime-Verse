@@ -4,12 +4,14 @@ import com.project.user_service.domain.dto.request.BioUpdateGroupRequestDto;
 import com.project.user_service.domain.dto.request.CreateGroupRequestDto;
 import com.project.user_service.domain.dto.response.GroupResponseDto;
 import com.project.user_service.domain.entity.groups.Group;
+import com.project.user_service.domain.entity.groups.GroupMember;
 import com.project.user_service.domain.entity.groups.ImageGroup;
 import com.project.user_service.domain.entity.users.Users;
 import com.project.user_service.domain.enums.RedisMethod;
 import com.project.user_service.exception.customException.GroupNotFoundException;
 import com.project.user_service.exception.customException.ImageUploadFailedException;
 import com.project.user_service.exception.customException.UserNotFoundException;
+import com.project.user_service.repository.GroupMemberRepository;
 import com.project.user_service.repository.GroupRepository;
 import com.project.user_service.repository.ImageGroupRepository;
 import com.project.user_service.repository.UsersRepository;
@@ -32,6 +34,7 @@ public class GroupService {
     private final RedisService redisService;
     private final ImageGroupRepository imageGroupRepository;
     private final KafkaService kafkaService;
+    private final GroupMemberRepository groupMemberRepository;
 
     private static final long MAX_IMAGE_SIZE = 5L * 1024 * 1024;
     private static final int PAGE_LIMIT = 10;
@@ -123,7 +126,7 @@ public class GroupService {
                 .groupName(group.getGroupName())
                 .groupBio(group.getBio())
                 .dateOfCreation(group.getDateOfCreation())
-                .memberCount(0)
+                .memberCount(1) // Leader counts as 1 member
                 .leaderUsername(user.getUsername())
                 .leaderDisplayName(user.getDisplayName())
                 .leaderId(user.getId())
@@ -170,6 +173,12 @@ public class GroupService {
             throw new GroupNotFoundException("Group : " + id);
         }
 
+        // Verify group is enabled
+        Group groupEntity = groupRepository.findById(id).orElse(null);
+        if (groupEntity != null && !groupEntity.getEnable()) {
+            throw new IllegalArgumentException("Group is Block");
+        }
+
         long time = TIME_REDIS + getResponseOption.get().getMemberCount();
         time = Math.min(time, TIME_REDIS_MAX);
         redisService.set(RedisMethod.GROUP_ + id.toString(), getResponseOption.get(), time);
@@ -197,6 +206,16 @@ public class GroupService {
             log.error("Group can't update the image due to null id");
             throw new GroupNotFoundException("Group Id cannot be null");
         }
+
+        // Check if group is enabled
+        Group group = groupRepository.findById(id).orElse(null);
+        if (group == null) {
+            throw new GroupNotFoundException("Group : " + id);
+        }
+        if (!group.getEnable()) {
+            throw new IllegalArgumentException("Group is Block");
+        }
+
         List<String> imageUpdate = new ArrayList<>();
 
         ImageGroup imageGroup = groupRepository.getGroupImageById(id);
@@ -254,6 +273,14 @@ public class GroupService {
             throw new IllegalArgumentException("Request Missing Id or Bio");
         }
 
+        Group group = groupRepository.findById(requestDto.getId()).orElse(null);
+        if (group == null) {
+            throw new GroupNotFoundException("Group : " + requestDto.getId());
+        }
+        if (!group.getEnable()) {
+            throw new IllegalArgumentException("Group is Block");
+        }
+
         int update = groupRepository.updateTheBio(requestDto.getId(), requestDto.getBio());
 
         if (update == 0) {
@@ -267,6 +294,125 @@ public class GroupService {
         List<String> updated = new ArrayList<>();
         updated.add("Bio");
         return updated;
+    }
+
+    public boolean isLeader(UUID userId, UUID groupId) {
+        if (userId == null || groupId == null) {
+            return false;
+        }
+
+        Group group = groupRepository.findById(groupId).orElse(null);
+        if (group == null) {
+            return false;
+        }
+
+        return group.getLeader().getId().equals(userId);
+    }
+
+    @Transactional
+    public GroupResponseDto changeLeader(UUID groupId, UUID newLeaderId, UUID currentLeaderId) {
+        if (groupId == null || newLeaderId == null || currentLeaderId == null) {
+            throw new IllegalArgumentException("Group ID, new leader ID, and current leader ID are required");
+        }
+
+        if (newLeaderId.equals(currentLeaderId)) {
+            throw new IllegalArgumentException("New leader cannot be the same as current leader");
+        }
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group : " + groupId));
+
+        if (!group.getLeader().getId().equals(currentLeaderId)) {
+            throw new IllegalArgumentException("Only the current leader can transfer leadership");
+        }
+
+        if (!group.getEnable()) {
+            throw new IllegalArgumentException("Group is Block");
+        }
+
+        Users newLeader = usersRepository.findByIdAndEnableTrue(newLeaderId);
+        if (newLeader == null) {
+            throw new UserNotFoundException(newLeaderId.toString());
+        }
+
+        Optional<GroupMember> memberCheck = groupMemberRepository.findByGroupIdAndUserId(groupId, newLeaderId);
+        if (memberCheck.isEmpty()) {
+            throw new IllegalArgumentException("New leader must be a member of the group");
+        }
+
+        Users oldLeader = group.getLeader();
+
+        oldLeader.getLeaderOfGroup().remove(group);
+
+        Optional<GroupMember> oldLeaderAsMember = groupMemberRepository.findByGroupIdAndUserId(groupId,
+                currentLeaderId);
+
+        if (oldLeaderAsMember.isEmpty()) {
+            GroupMember newMember = GroupMember.builder()
+                    .users(oldLeader)
+                    .group(group)
+                    .build();
+            group.getMembers().add(newMember);
+            groupMemberRepository.save(newMember);
+        }
+
+        GroupMember memberToRemove = memberCheck.get();
+        group.getMembers().remove(memberToRemove);
+        groupMemberRepository.delete(memberToRemove);
+
+        group.setLeader(newLeader);
+        newLeader.getLeaderOfGroup().add(group);
+
+        groupRepository.save(group);
+
+        log.info("Group : {} leadership transferred from {} to {}",
+                groupId, oldLeader.getUsername(), newLeader.getUsername());
+
+        redisService.delete(RedisMethod.GROUP_ + groupId.toString());
+
+        GroupResponseDto responseDto = GroupResponseDto.builder()
+                .id(group.getId())
+                .groupName(group.getGroupName())
+                .groupBio(group.getBio())
+                .dateOfCreation(group.getDateOfCreation())
+                .memberCount(group.getMembers().size() + 1) // Members + leader
+                .leaderUsername(newLeader.getUsername())
+                .leaderDisplayName(newLeader.getDisplayName())
+                .leaderId(newLeader.getId())
+                .profileImage(null)
+                .profileImageType(null)
+                .bgImage(null)
+                .bgImageType(null)
+                .build();
+
+        kafkaService.updateIntoGroupDatabase(groupId, null, null, newLeader.getId().toString(),
+                newLeader.getUsername());
+
+        return responseDto;
+    }
+
+    @Transactional
+    public void deleteGroup(UUID groupId, UUID leaderId) {
+        if (groupId == null || leaderId == null) {
+            throw new IllegalArgumentException("Group ID and leader ID are required");
+        }
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group : " + groupId));
+
+        if (!group.getLeader().getId().equals(leaderId)) {
+            throw new IllegalArgumentException("Only the leader can delete the group");
+        }
+
+        Users leader = group.getLeader();
+
+        leader.getLeaderOfGroup().remove(group);
+        group.setEnable(false);
+        groupRepository.save(group);
+        redisService.delete(RedisMethod.GROUP_ + groupId.toString());
+
+        log.info("Group : {} ({}) has been deleted by leader : {} ({})",
+                groupId, group.getGroupName(), leaderId, leader.getUsername());
     }
 
 }

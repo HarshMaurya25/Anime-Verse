@@ -71,7 +71,7 @@ public class GroupService {
 
     public Page<GroupSearchResponseDto> searchGroup(String keyword, int page) {
         if (page < 0) {
-            page = 1;
+            page = 0;
         }
         Pageable pageable = PageRequest.of(page, PAGE_LENGTH);
         return groupRepository.searchByKeyword(keyword, pageable);

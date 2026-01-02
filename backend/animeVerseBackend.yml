@@ -2,9 +2,6 @@ services:
   api-gateway:
     image: magician05/api-gatway:latest
     container_name: api-gateway
-    depends_on:
-      - user-service
-      - search-service
     environment:
       SECURITY_JWT_SECRET: AVx9KQp7mT3ZrE2Wn8YFJHcL5B0uD4aS6GkPqR1oI
     ports:
@@ -52,14 +49,14 @@ services:
   # #   networks:
   # #     - anime-verse-network
 
-  # adminer:
-  #   image: adminer
-  #   container_name: adminer
-  #   ports:
-  #     - "12312:8080"
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "12312:8080"
 
-  #   networks:
-  #     - anime-verse-network
+    networks:
+      - anime-verse-network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -199,6 +196,41 @@ services:
     networks:
       - anime-verse-network
 
+  # content-redis:
+  #   image: redis:7.2-alpine
+  #   container_name: content-redis
+  #   command: redis-server --appendonly yes
+  #   volumes:
+  #     - content_redis_data:/data
+
+  #   networks:
+  #     - anime-verse-network
+
+  # content-service:
+  #   image: magician05/content-service:latest
+  #   container_name: content-service
+
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://content-database:5432/anime_verse
+  #     SPRING_DATASOURCE_USERNAME: anime_verse
+  #     SPRING_DATASOURCE_PASSWORD: anime_verse
+  #     SPRING_REDIS_HOST: content-redis
+  #     SPRING_REDIS_PORT: 6379
+  #   networks:
+  #     - anime-verse-network
+
+  # content-database:
+  #   image: postgres:16
+  #   container_name: content-database
+  #   environment:
+  #     POSTGRES_DB: anime_verse
+  #     POSTGRES_USER: anime_verse
+  #     POSTGRES_PASSWORD: anime_verse
+  #   volumes:
+  #     - content-db:/var/lib/postgresql/data
+  #   networks:
+  #     - anime-verse-network
+
 networks:
   anime-verse-network:
     driver: bridge
@@ -207,7 +239,9 @@ volumes:
   neo4j_data:
   auth-db:
   user-db:
+  content-db:
   auth_redis_data:
+  content_redis_data:
   zookeeper-data:
   zookeeper-log:
   kafka-data:

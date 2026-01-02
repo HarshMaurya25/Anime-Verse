@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "recommendation";
+
+service Recommendation {
+  rpc GetRecommendation (RecommendationRequest) returns (RecommendationResponse);
+}
+
+message RecommendationRequest {
+  string type = 1;
+  string tags = 2;
+  int32 count = 3;
+}
+
+message RecommendationResponse {
+  string id = 1;
+  string title = 2;
+  string userDisplayName = 3;
+  string tag = 4;
+}

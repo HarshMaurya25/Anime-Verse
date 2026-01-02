@@ -13,32 +13,33 @@ import java.util.UUID;
 @EnableElasticsearchRepositories
 public interface GroupRepository extends ElasticsearchRepository<Group, String> {
 
-    Group getByIdAndEnableTrue(String id);
+	Group getByIdAndEnableTrue(String id);
 
-    @Query("""
-            {
-            	"bool": {
-            		"filter": [
-            			{ "term": { "enable": true } }
-            		],
-            		"should": [
-            			{
-            				"multi_match": {
-            					"query": "?0",
-            					"fields": ["groupName^4", "leader_display_name^1"],
-            					"type": "phrase"
-            				}
-            			},
-            			{
-            				"multi_match": {
-            					"query": "?0",
-            					"fields": ["groupName^4", "leader_display_name^1", "bio^3", "leader_username^1"],
-            					"fuzziness": "AUTO"
-            				}
-            			}
-            		]
-            	}
-            }
-            """)
-    Page<GroupSearchResponseDto> searchByKeyword(String keyword, Pageable pageable);
+	@Query("""
+			{
+				"bool": {
+					"filter": [
+						{ "term": { "enable": true } }
+					],
+					"should": [
+						{
+							"multi_match": {
+								"query": "?0",
+								"fields": ["groupName^4", "leader_display_name^1"],
+								"type": "phrase"
+							}
+						},
+						{
+							"multi_match": {
+								"query": "?0",
+								"fields": ["groupName^4", "leader_display_name^1", "bio^3", "leader_username^1"],
+								"fuzziness": "AUTO"
+							}
+						}
+					],
+					"minimum_should_match": 1
+				}
+			}
+			""")
+	Page<GroupSearchResponseDto> searchByKeyword(String keyword, Pageable pageable);
 }

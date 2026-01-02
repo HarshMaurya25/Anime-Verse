@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: recommendation-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: create
+    show-sql: true
+
+server:
+  port: 11116
