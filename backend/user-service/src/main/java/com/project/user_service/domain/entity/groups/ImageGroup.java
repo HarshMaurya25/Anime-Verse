@@ -16,6 +16,11 @@ public class ImageGroup {
     @Id
     private UUID id;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "group_id")
+    private Group group;
+
     @Lob
     @Column(name = "profile_image", nullable = true)
     private byte[] profileImage;
