@@ -155,6 +155,14 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ContentNotFoundException.class)
+    public ResponseEntity<List<ApiError>> handleContentNotFoundException(ContentNotFoundException exception) {
+        return buildError(
+                exception.getMessage(),
+                "Content Not Found",
+                HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(UsernameOrEmailAlreadyExistsException.class)
     public ResponseEntity<List<ApiError>> handleUserAlreadyExists(UsernameOrEmailAlreadyExistsException exception) {
         return buildError(
@@ -170,7 +178,6 @@ public class GlobalExceptionHandler {
                 "User Already Exists",
                 HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(ExpireOrWrongRefreshTokenException.class)
     public ResponseEntity<List<ApiError>> handleExpireOrWrongRefreshTokenException(
@@ -228,13 +235,14 @@ public class GlobalExceptionHandler {
      * =========================
      */
 
-//    @ExceptionHandler(RuntimeException.class)
-//    public ResponseEntity<List<ApiError>> handleGenericException(RuntimeException exception) {
-//        return buildError(
-//                exception.getMessage(),
-//                "Error Occured",
-//                HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
+    // @ExceptionHandler(RuntimeException.class)
+    // public ResponseEntity<List<ApiError>> handleGenericException(RuntimeException
+    // exception) {
+    // return buildError(
+    // exception.getMessage(),
+    // "Error Occured",
+    // HttpStatus.INTERNAL_SERVER_ERROR);
+    // }
 
     /*
      * =========================

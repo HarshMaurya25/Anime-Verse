@@ -196,40 +196,45 @@ services:
     networks:
       - anime-verse-network
 
-  # content-redis:
-  #   image: redis:7.2-alpine
-  #   container_name: content-redis
-  #   command: redis-server --appendonly yes
-  #   volumes:
-  #     - content_redis_data:/data
+  content-database:
+    image: postgres:16
+    container_name: content-database
+    environment:
+      POSTGRES_DB: anime_verse
+      POSTGRES_USER: anime_verse
+      POSTGRES_PASSWORD: anime_verse
+    volumes:
+      - content-db:/var/lib/postgresql/data
+    networks:
+      - anime-verse-network
 
-  #   networks:
-  #     - anime-verse-network
+  content-redis:
+    image: redis:7.2-alpine
+    container_name: content-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - content_redis_data:/data
+    networks:
+      - anime-verse-network
 
-  # content-service:
-  #   image: magician05/content-service:latest
-  #   container_name: content-service
-
-  #   environment:
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://content-database:5432/anime_verse
-  #     SPRING_DATASOURCE_USERNAME: anime_verse
-  #     SPRING_DATASOURCE_PASSWORD: anime_verse
-  #     SPRING_REDIS_HOST: content-redis
-  #     SPRING_REDIS_PORT: 6379
-  #   networks:
-  #     - anime-verse-network
-
-  # content-database:
-  #   image: postgres:16
-  #   container_name: content-database
-  #   environment:
-  #     POSTGRES_DB: anime_verse
-  #     POSTGRES_USER: anime_verse
-  #     POSTGRES_PASSWORD: anime_verse
-  #   volumes:
-  #     - content-db:/var/lib/postgresql/data
-  #   networks:
-  #     - anime-verse-network
+  content-service:
+    image: magician05/content-service:latest
+    container_name: content-service
+    depends_on:
+      - content-database
+      - content-redis
+      - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://content-database:5432/anime_verse
+      SPRING_DATASOURCE_USERNAME: anime_verse
+      SPRING_DATASOURCE_PASSWORD: anime_verse
+      SPRING_REDIS_HOST: content-redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "11115:11115"
+    networks:
+      - anime-verse-network
 
 networks:
   anime-verse-network:

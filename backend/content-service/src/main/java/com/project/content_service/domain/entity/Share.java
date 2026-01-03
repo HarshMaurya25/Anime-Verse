@@ -13,29 +13,24 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comments {
+public class Share {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_id")
     private Content content;
-
-    @Column(nullable = false)
-    private String comment;
-
-    @Column(nullable = false)
-    private String userUserName;
 
     @Column(nullable = false)
     private UUID userId;
 
     @Column(nullable = false)
-    private LocalDateTime commentAt;
+    private LocalDateTime sharedAt;
 
-    @PreUpdate
-    private void atCreate() {
-        commentAt = LocalDateTime.now();
+    @PrePersist
+    private void onCreate() {
+        this.sharedAt = LocalDateTime.now();
     }
 }

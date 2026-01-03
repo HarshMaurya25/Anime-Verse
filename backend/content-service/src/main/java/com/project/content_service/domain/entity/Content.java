@@ -33,13 +33,27 @@ public class Content {
     @Enumerated(EnumType.STRING)
     private Set<Genre> genre;
 
+    private Set<String> tags;
+
     private String bio;
+
+    @Column(nullable = false)
+    private UUID userID;
+
+    @Column(nullable = false)
+    private String userName;
+
+    @Column(nullable = false)
+    private String displayName;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private ContentMedia contentMedia;
 
     @OneToMany(mappedBy = "content", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
-    private Set<LikeAndDislike> likeAndDislikes;
+    private Set<LikeShare> likeAndDislikes;
+
+    @OneToMany(mappedBy = "content", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<Comments> comments;
 
     @Column(nullable = false)
     private Boolean enable;

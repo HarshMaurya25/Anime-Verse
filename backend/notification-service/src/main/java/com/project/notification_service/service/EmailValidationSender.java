@@ -42,7 +42,7 @@ public class EmailValidationSender {
             }
 
             mailSender.send(message);
-            log.info("Verification Email sent to {} ({})", codeDto.getUsername(), codeDto.getEmail());
+            log.info("Verification Email sent to {} ({}) with Code : {}", codeDto.getUsername(), codeDto.getEmail() , codeDto.getInformation());
 
         } catch (MessagingException e) {
             log.error("Failed to send verification email to {}: {}", codeDto.getEmail(), e.getMessage());
@@ -129,7 +129,7 @@ public class EmailValidationSender {
                 + "</p>"
                 + "</td></tr>"
                 + "<tr><td style='padding:0 32px 32px'>"
-                + "<a href='http://localhost:5173/ "
+                + "<a href='http://localhost:5173/'  "
                 + "style='display:inline-block;padding:10px 16px;"
                 + "background-color:#e11d48;color:#ffffff;text-decoration:none;"
                 + "border-radius:6px;font-size:14px;font-weight:500;'>"

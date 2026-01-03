@@ -3,6 +3,7 @@ package com.project.content_service.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Table
@@ -23,4 +24,11 @@ public class ContentMedia {
 
     @Column(nullable = false)
     private String contentType;
+
+    private LocalDateTime updateImageTimeStamp;
+
+    @PreUpdate
+    private void atCreate() {
+        this.updateImageTimeStamp = LocalDateTime.now();
+    }
 }

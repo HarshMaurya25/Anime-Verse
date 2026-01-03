@@ -1,5 +1,6 @@
 package com.project.content_service.domain.entity;
 
+import com.project.content_service.domain.enums.LikeOrDislikeEnums;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,29 +14,32 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comments {
+public class LikeShare {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content")
     private Content content;
 
     @Column(nullable = false)
-    private String comment;
+    @Enumerated(EnumType.STRING)
+    private LikeOrDislikeEnums likeOrDislike;
 
     @Column(nullable = false)
-    private String userUserName;
+    private Boolean comment;
 
     @Column(nullable = false)
     private UUID userId;
 
     @Column(nullable = false)
-    private LocalDateTime commentAt;
+    private LocalDateTime likeAndDislikeAt;
 
     @PreUpdate
     private void atCreate() {
-        commentAt = LocalDateTime.now();
+        this.likeAndDislikeAt = LocalDateTime.now();
     }
+
 }
