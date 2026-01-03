@@ -105,6 +105,10 @@ public class GroupService {
             throw new ImageUploadFailedException("Failed to background images");
         }
 
+        // Save group first to generate ID
+        group = groupRepository.saveAndFlush(group);
+
+        // Now create ImageGroup with the generated group ID
         ImageGroup imageGroup = ImageGroup.builder()
                 .profileImage(profileImageBytes)
                 .profileImageType(profileImageType)
@@ -112,10 +116,12 @@ public class GroupService {
                 .bgImageType(bgImageType)
                 .build();
 
-        // ensure owning side has reference to parent so @MapsId can use group's id as PK
+        // Set bidirectional relationship - this will set the ID via @MapsId
         imageGroup.setGroup(group);
         group.setImages(imageGroup);
-        groupRepository.save(group);
+
+        // Save the ImageGroup explicitly
+        imageGroupRepository.save(imageGroup);
 
         user.getLeaderOfGroup().add(group);
 
@@ -149,12 +155,14 @@ public class GroupService {
             throw new IllegalArgumentException("Id can't be Null");
         }
 
-        GroupResponseDto groupResponseDto = redisService.get(id.toString(), GroupResponseDto.class);
+        String redisKey = RedisMethod.GROUP_ + id.toString();
+        GroupResponseDto groupResponseDto = redisService.get(redisKey, GroupResponseDto.class);
         if (groupResponseDto != null) {
 
-            redisService.set(RedisMethod.GROUP_ + id.toString(), groupResponseDto, TIME_REDIS);
+            redisService.set(redisKey, groupResponseDto, TIME_REDIS);
 
-            if ((groupResponseDto.getProfileImage() != null) || giveImage == false) {
+            // Return early if images not requested OR images already loaded in cache
+            if (!giveImage || groupResponseDto.getProfileImage() != null) {
                 return groupResponseDto;
             }
 
@@ -175,16 +183,13 @@ public class GroupService {
             throw new GroupNotFoundException("Group : " + id);
         }
 
-        // Verify group is enabled
-        Group groupEntity = groupRepository.findById(id).orElse(null);
-        if (groupEntity != null && !groupEntity.getEnable()) {
-            throw new IllegalArgumentException("Group is Block");
-        }
+        // Note: getGroupById already filters for enable = true, so no need to check
+        // again
 
         long time = TIME_REDIS + getResponseOption.get().getMemberCount();
         time = Math.min(time, TIME_REDIS_MAX);
         redisService.set(RedisMethod.GROUP_ + id.toString(), getResponseOption.get(), time);
-        if (giveImage == false) {
+        if (!giveImage) {
             return getResponseOption.get();
         }
 
@@ -415,6 +420,100 @@ public class GroupService {
 
         log.info("Group : {} ({}) has been deleted by leader : {} ({})",
                 groupId, group.getGroupName(), leaderId, leader.getUsername());
+    }
+
+    @Transactional
+    public void joinGroup(UUID groupId, UUID userId) {
+        if (groupId == null || userId == null) {
+            throw new IllegalArgumentException("Group ID and User ID are required");
+        }
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group : " + groupId));
+
+        if (!group.getEnable()) {
+            throw new IllegalArgumentException("Group is blocked");
+        }
+
+        // Check if user is already the leader
+        if (group.getLeader().getId().equals(userId)) {
+            throw new IllegalArgumentException("Leader cannot join as a member");
+        }
+
+        Users user = usersRepository.findByIdAndEnableTrue(userId);
+        if (user == null) {
+            throw new UserNotFoundException(userId.toString());
+        }
+
+        // Check if already a member
+        Optional<GroupMember> existingMember = groupMemberRepository.findByGroupIdAndUserId(groupId, userId);
+        if (existingMember.isPresent()) {
+            throw new IllegalArgumentException("User is already a member of this group");
+        }
+
+        GroupMember newMember = GroupMember.builder()
+                .users(user)
+                .group(group)
+                .build();
+
+        group.getMembers().add(newMember);
+        groupMemberRepository.save(newMember);
+
+        // Invalidate cache
+        redisService.delete(RedisMethod.GROUP_ + groupId.toString());
+
+        log.info("User : {} ({}) joined group : {} ({})",
+                userId, user.getUsername(), groupId, group.getGroupName());
+    }
+
+    @Transactional
+    public void leaveGroup(UUID groupId, UUID userId) {
+        if (groupId == null || userId == null) {
+            throw new IllegalArgumentException("Group ID and User ID are required");
+        }
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group : " + groupId));
+
+        // Leader cannot leave, they must transfer leadership or delete the group
+        if (group.getLeader().getId().equals(userId)) {
+            throw new IllegalArgumentException(
+                    "Leader cannot leave the group. Transfer leadership or delete the group.");
+        }
+
+        Optional<GroupMember> memberOpt = groupMemberRepository.findByGroupIdAndUserId(groupId, userId);
+        if (memberOpt.isEmpty()) {
+            throw new IllegalArgumentException("User is not a member of this group");
+        }
+
+        GroupMember member = memberOpt.get();
+        group.getMembers().remove(member);
+        groupMemberRepository.delete(member);
+
+        // Invalidate cache
+        redisService.delete(RedisMethod.GROUP_ + groupId.toString());
+
+        log.info("User : {} left group : {} ({})",
+                userId, groupId, group.getGroupName());
+    }
+
+    public boolean isMember(UUID userId, UUID groupId) {
+        if (userId == null || groupId == null) {
+            return false;
+        }
+
+        // Check if user is the leader
+        Group group = groupRepository.findById(groupId).orElse(null);
+        if (group == null) {
+            return false;
+        }
+
+        if (group.getLeader().getId().equals(userId)) {
+            return true;
+        }
+
+        // Check if user is a member
+        return groupMemberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
     }
 
 }

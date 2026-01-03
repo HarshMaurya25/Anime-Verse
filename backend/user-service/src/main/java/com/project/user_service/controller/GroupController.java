@@ -76,4 +76,22 @@ public class GroupController {
         groupService.deleteGroup(groupId, leaderId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/join")
+    @PreAuthorize("authentication.principal.id.equals(#userId)")
+    public ResponseEntity<Void> joinGroup(
+            @RequestParam UUID groupId,
+            @RequestParam UUID userId) {
+        groupService.joinGroup(groupId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/leave")
+    @PreAuthorize("authentication.principal.id.equals(#userId)")
+    public ResponseEntity<Void> leaveGroup(
+            @RequestParam UUID groupId,
+            @RequestParam UUID userId) {
+        groupService.leaveGroup(groupId, userId);
+        return ResponseEntity.ok().build();
+    }
 }
