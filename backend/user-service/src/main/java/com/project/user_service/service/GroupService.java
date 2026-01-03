@@ -112,6 +112,8 @@ public class GroupService {
                 .bgImageType(bgImageType)
                 .build();
 
+        // ensure owning side has reference to parent so @MapsId can use group's id as PK
+        imageGroup.setGroup(group);
         group.setImages(imageGroup);
         groupRepository.save(group);
 

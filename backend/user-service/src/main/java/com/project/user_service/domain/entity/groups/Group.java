@@ -39,8 +39,8 @@ public class Group {
     @Column(nullable = false, updatable = false)
     private LocalDate dateOfCreation;
 
-    @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
-    private ImageGroup images;
+    @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL, mappedBy = "group")
+    private ImageGroup images; 
 
     private Boolean enable;
 
