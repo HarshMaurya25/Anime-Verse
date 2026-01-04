@@ -1,4 +1,4 @@
-package com.project.content_service.exception;
+package com.project.recommendation_service.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
