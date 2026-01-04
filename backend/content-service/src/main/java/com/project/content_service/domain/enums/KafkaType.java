@@ -7,5 +7,10 @@ public enum KafkaType {
     SHARE,
     COMMENT,
     DELETE,
-    DISABLE
+    DISABLE,
+    ENABLE,
+    REMOVE_LIKE,
+    REMOVE_DISLIKE,
+    CHANGE_TO_LIKE,
+    CHANGE_TO_DISLIKE
 }

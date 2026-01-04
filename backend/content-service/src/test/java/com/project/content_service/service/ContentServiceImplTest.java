@@ -722,46 +722,7 @@ class ContentServiceImplTest {
         }
     }
 
-    @Nested
-    @DisplayName("removeLikeDislike Tests")
-    class RemoveLikeDislikeTests {
 
-        @Test
-        @DisplayName("Should remove like and decrement count")
-        void removeLikeDislike_WhenLikeExists_RemovesAndDecrements() {
-            LikeDislikeRequest request = LikeDislikeRequest.builder()
-                    .contentId(contentId)
-                    .userId(userId)
-                    .build();
-
-            LikeShare existingLike = LikeShare.builder()
-                    .likeOrDislike(LikeOrDislikeEnums.LIKE)
-                    .build();
-
-            when(likeShareRepository.findByContentIdAndUserId(contentId, userId)).thenReturn(Optional.of(existingLike));
-            when(redisService.get(anyString(), eq(ContentDetailResponse.class))).thenReturn(testDetailResponse);
-
-            contentService.removeLikeDislike(request);
-
-            verify(likeShareRepository).delete(existingLike);
-            assertThat(testDetailResponse.getLikeCount()).isEqualTo(9L);
-        }
-
-        @Test
-        @DisplayName("Should do nothing when no existing like/dislike")
-        void removeLikeDislike_WhenNoExisting_DoesNothing() {
-            LikeDislikeRequest request = LikeDislikeRequest.builder()
-                    .contentId(contentId)
-                    .userId(userId)
-                    .build();
-
-            when(likeShareRepository.findByContentIdAndUserId(contentId, userId)).thenReturn(Optional.empty());
-
-            contentService.removeLikeDislike(request);
-
-            verify(likeShareRepository, never()).delete(any());
-        }
-    }
 
     @Nested
     @DisplayName("shareContent Tests")

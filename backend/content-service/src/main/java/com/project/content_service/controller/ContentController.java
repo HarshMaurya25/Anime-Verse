@@ -6,6 +6,7 @@ import com.project.content_service.domain.dto.request.LikeDislikeRequest;
 import com.project.content_service.domain.dto.response.CommentResponse;
 import com.project.content_service.domain.dto.response.ContentDetailResponse;
 import com.project.content_service.domain.dto.response.ContentResponse;
+import com.project.content_service.domain.dto.response.InteractionDto;
 import com.project.content_service.service.ContentServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -164,23 +165,14 @@ public class ContentController {
 
     @PreAuthorize("authentication.principal.id.equals(#request.userId)")
     @PostMapping("/like")
-    public ResponseEntity<Void> likeContent(@Valid @RequestBody LikeDislikeRequest request) {
-        contentService.likeContent(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<InteractionDto> likeContent(@Valid @RequestBody LikeDislikeRequest request) {
+        return ResponseEntity.ok().body(contentService.likeContent(request));
     }
 
     @PreAuthorize("authentication.principal.id.equals(#request.userId)")
     @PostMapping("/dislike")
-    public ResponseEntity<Void> dislikeContent(@Valid @RequestBody LikeDislikeRequest request) {
-        contentService.dislikeContent(request);
-        return ResponseEntity.ok().build();
-    }
-
-    @PreAuthorize("authentication.principal.id.equals(#request.userId)")
-    @DeleteMapping("/like-dislike/remove")
-    public ResponseEntity<Void> removeLikeDislike(@Valid @RequestBody LikeDislikeRequest request) {
-        contentService.removeLikeDislike(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<InteractionDto> dislikeContent(@Valid @RequestBody LikeDislikeRequest request) {
+        return ResponseEntity.ok().body(contentService.dislikeContent(request));
     }
 
     @PreAuthorize("authentication.principal.id.equals(#userId)")

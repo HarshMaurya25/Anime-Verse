@@ -1,10 +1,13 @@
 package com.project.content_service.service;
 
+import com.project.content_service.domain.dto.response.*;
 import com.project.content_service.domain.entity.Content;
 import com.project.content_service.domain.entity.Comments;
 import com.project.content_service.domain.entity.ContentMedia;
 import com.project.content_service.domain.entity.LikeShare;
 import com.project.content_service.domain.entity.Share;
+import com.project.content_service.domain.enums.KafkaDomain;
+import com.project.content_service.domain.enums.KafkaType;
 import com.project.content_service.domain.enums.LikeOrDislikeEnums;
 import com.project.content_service.domain.enums.RedisKey;
 import com.project.content_service.domain.mapper.ContentMapper;
@@ -13,22 +16,15 @@ import com.project.content_service.repository.LikeShareRepository;
 import com.project.content_service.repository.ShareRepository;
 import com.project.content_service.domain.dto.request.AddCommentRequest;
 import com.project.content_service.domain.dto.request.CreateContentRequest;
-import com.project.content_service.domain.dto.request.EditBioRequest;
-import com.project.content_service.domain.dto.request.EditTagsRequest;
 import com.project.content_service.domain.dto.request.LikeDislikeRequest;
-import com.project.content_service.domain.dto.request.UpdateContentRequest;
-import com.project.content_service.domain.dto.response.CommentResponse;
-import com.project.content_service.domain.dto.response.ContentDetailResponse;
-import com.project.content_service.domain.dto.response.ContentMediaResponse;
-import com.project.content_service.domain.dto.response.ContentResponse;
 import com.project.content_service.exception.customException.ContentNotFoundException;
 import com.project.content_service.exception.customException.ImageUploadFailedException;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,16 +32,14 @@ import com.project.content_service.repository.CommentsRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+
 public class ContentServiceImpl {
 
     private final ContentRepository contentRepository;
@@ -54,6 +48,8 @@ public class ContentServiceImpl {
     private final LikeShareRepository likeShareRepository;
     private final ShareRepository shareRepository;
     private final RedisService redisService;
+    private final KafkaServices kafkaService;
+    private final EntityManager entityManager;
 
     private static final long MAX_MEDIA_SIZE = 5L * 1024 * 1024;
     private static final int PAGE_SIZE = 12;
@@ -114,6 +110,10 @@ public class ContentServiceImpl {
             throw new IllegalArgumentException("No Content");
         }
 
+        if (request.getTags().size() > 10) {
+            throw new IllegalArgumentException("Tag is more than 10");
+        }
+
         Content content = Content.builder()
                 .title(request.getTitle())
                 .animeCategories(request.getAnimeCategories())
@@ -138,6 +138,22 @@ public class ContentServiceImpl {
 
         log.info("Content created successfully with ID: {} by user: {}", content.getId(), request.getUserID());
 
+        Map<String, Object> objectMap = new HashMap<>();
+        objectMap.put(KafkaDomain.CONTENT_ID.toString(), content.getId().toString());
+        objectMap.put(KafkaDomain.CONTENT_TITLE.name(), content.getTitle());
+        objectMap.put(KafkaDomain.USERNAME.name(), content.getUserName());
+        objectMap.put(KafkaDomain.TIME_OF_CREATION.name(), LocalDateTime.now());
+        objectMap.put(KafkaDomain.CONTENT_CATEGORY.name(), content.getAnimeCategories());
+        objectMap.put(KafkaDomain.CONTENT_GENRE.name(), content.getGenre());
+        objectMap.put(KafkaDomain.CONTENT_TAG.name(), content.getTags());
+
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(KafkaType.CREATE, objectMap);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in Create Message due to {}" , e.getMessage());
+        }
+
         return contentMapper.toResponse(content);
     }
 
@@ -158,6 +174,16 @@ public class ContentServiceImpl {
         redisService.delete(RedisKey.CONTENT_ + contentId.toString());
         redisService.delete(RedisKey.CONTENT_MEDIA_ + contentId.toString());
         log.info("Content deleted successfully with ID: {}", contentId);
+
+        Map<String, Object> objectMap = new HashMap<>();
+        objectMap.put(KafkaDomain.CONTENT_ID.toString(), contentId.toString());
+
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(KafkaType.DELETE, objectMap);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in Delete Message due to {}" , e.getMessage());
+        }
     }
 
     @Transactional
@@ -176,6 +202,15 @@ public class ContentServiceImpl {
 
         redisService.delete(RedisKey.CONTENT_ + contentId.toString());
         log.info("Content disabled successfully with ID: {}", contentId);
+
+        Map<String, Object> objectMap = new HashMap<>();
+        objectMap.put(KafkaDomain.CONTENT_ID.toString(), contentId.toString());
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(KafkaType.DISABLE, objectMap);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in DISABLE Message due to {}" , e.getMessage());
+        }
     }
 
     @Transactional
@@ -194,6 +229,16 @@ public class ContentServiceImpl {
 
         redisService.delete(RedisKey.CONTENT_ + contentId.toString());
         log.info("Content enabled successfully with ID: {}", contentId);
+
+        Map<String, Object> objectMap = new HashMap<>();
+        objectMap.put(KafkaDomain.CONTENT_ID.toString(), contentId.toString());
+
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(KafkaType.ENABLE, objectMap);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in Enable Message due to {}" , e.getMessage());
+        }
     }
 
     public ContentDetailResponse getContentDetailById(UUID contentId, UUID userId, boolean includeMedia) {
@@ -495,12 +540,24 @@ public class ContentServiceImpl {
             cached.setCommentCount(cached.getCommentCount() + 1);
             redisService.set(cacheKey, cached, REDIS_TTL);
         }
-
         log.info("Comment added successfully for content ID: {}", request.getContentId());
+
+        Map<String, Object> map = new HashMap<>();
+        map.put(KafkaDomain.CONTENT_ID.toString(), request.getContentId().toString());
+        map.put(KafkaDomain.USER_ID.toString(), request.getUserId().toString());
+        map.put(KafkaDomain.TIME_OF_CREATION.toString(), LocalDateTime.now());
+
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(KafkaType.COMMENT, map);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in Comment Message due to {}" , e.getMessage());
+        }
+
     }
 
     @Transactional
-    public void likeContent(LikeDislikeRequest request) {
+    public InteractionDto likeContent(LikeDislikeRequest request) {
         log.info("Liking content ID: {} by user: {}", request.getContentId(), request.getUserId());
 
         if (request.getContentId() == null) {
@@ -521,38 +578,63 @@ public class ContentServiceImpl {
         String cacheKey = RedisKey.CONTENT_ + request.getContentId().toString();
         ContentDetailResponse cached = redisService.get(cacheKey, ContentDetailResponse.class);
 
+        Map<String, Object> map = new HashMap<>();
+
+        map.put(KafkaDomain.CONTENT_ID.toString(), request.getContentId().toString());
+        map.put(KafkaDomain.USER_ID.toString(), request.getUserId().toString());
+        map.put(KafkaDomain.TIME_OF_CREATION.toString(), LocalDateTime.now());
+        KafkaType type = null;
+
+        String response = "Failed";
         if (existing != null) {
             LikeOrDislikeEnums previousStatus = existing.getLikeOrDislike();
-            existing.setLikeOrDislike(LikeOrDislikeEnums.LIKE);
-            existing.setLikeAndDislikeAt(LocalDateTime.now());
-            likeShareRepository.save(existing);
-
-            if (cached != null && previousStatus == LikeOrDislikeEnums.DISLIKE) {
-                cached.setLikeCount(cached.getLikeCount() + 1);
-                cached.setDislikeCount(Math.max(0, cached.getDislikeCount() - 1));
-                redisService.set(cacheKey, cached, REDIS_TTL);
+            if (previousStatus == LikeOrDislikeEnums.LIKE) {
+                likeShareRepository.delete(existing);
+                type = KafkaType.REMOVE_LIKE;
+                response = "Remove Liked";
+            } else {
+                existing.setLikeOrDislike(LikeOrDislikeEnums.LIKE);
+                existing.setLikeAndDislikeAt(LocalDateTime.now());
+                likeShareRepository.save(existing);
+                if (cached != null) {
+                    cached.setLikeCount(cached.getLikeCount() + 1);
+                    cached.setDislikeCount(Math.max(0, cached.getDislikeCount() - 1));
+                    redisService.set(cacheKey, cached, REDIS_TTL);
+                }
+                type = KafkaType.CHANGE_TO_LIKE;
+                response = "Dislike -> Like";
             }
         } else {
-            LikeShare likeShare = LikeShare.builder()
+            LikeShare likeShare = LikeShare
+                    .builder()
                     .content(content)
                     .userId(request.getUserId())
                     .likeOrDislike(LikeOrDislikeEnums.LIKE)
-                    .comment(false)
                     .likeAndDislikeAt(LocalDateTime.now())
                     .build();
             likeShareRepository.save(likeShare);
-
             if (cached != null) {
                 cached.setLikeCount(cached.getLikeCount() + 1);
                 redisService.set(cacheKey, cached, REDIS_TTL);
             }
+            response = "Liked";
+            type = KafkaType.LIKE;
         }
 
-        log.info("Content liked successfully ID: {} by user: {}", request.getContentId(), request.getUserId());
+
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(type, map);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in Like Message due to {}" , e.getMessage());
+        }
+        log.info("Content {} successfully ID: {} by user: {}", response, request.getContentId(), request.getUserId());
+        return InteractionDto.builder()
+                .output(response).build();
     }
 
     @Transactional
-    public void dislikeContent(LikeDislikeRequest request) {
+    public InteractionDto dislikeContent(LikeDislikeRequest request) {
         log.info("Disliking content ID: {} by user: {}", request.getContentId(), request.getUserId());
 
         if (request.getContentId() == null) {
@@ -573,73 +655,57 @@ public class ContentServiceImpl {
         String cacheKey = RedisKey.CONTENT_ + request.getContentId().toString();
         ContentDetailResponse cached = redisService.get(cacheKey, ContentDetailResponse.class);
 
-        if (existing != null) {
-            LikeOrDislikeEnums previousStatus = existing.getLikeOrDislike();
-            existing.setLikeOrDislike(LikeOrDislikeEnums.DISLIKE);
-            existing.setLikeAndDislikeAt(LocalDateTime.now());
-            likeShareRepository.save(existing);
+        Map<String, Object> map = new HashMap<>();
 
-            if (cached != null && previousStatus == LikeOrDislikeEnums.LIKE) {
-                cached.setDislikeCount(cached.getDislikeCount() + 1);
-                cached.setLikeCount(Math.max(0, cached.getLikeCount() - 1));
-                redisService.set(cacheKey, cached, REDIS_TTL);
+        map.put(KafkaDomain.CONTENT_ID.toString(), request.getContentId().toString());
+        map.put(KafkaDomain.USER_ID.toString(), request.getUserId().toString());
+        map.put(KafkaDomain.TIME_OF_CREATION.toString(), LocalDateTime.now());
+        KafkaType type = null;
+
+        String response = "Failed";
+        if (existing != null) {
+
+            LikeOrDislikeEnums previousStatus = existing.getLikeOrDislike();
+            if (previousStatus == LikeOrDislikeEnums.DISLIKE) {
+                likeShareRepository.delete(existing);
+                type = KafkaType.REMOVE_DISLIKE;
+                response = "Remove Disliked";
+            } else {
+                existing.setLikeOrDislike(LikeOrDislikeEnums.DISLIKE);
+                existing.setLikeAndDislikeAt(LocalDateTime.now());
+                likeShareRepository.save(existing);
+                if (cached != null) {
+                    cached.setDislikeCount(cached.getDislikeCount() + 1);
+                    cached.setLikeCount(Math.max(0, cached.getLikeCount() - 1));
+                    redisService.set(cacheKey, cached, REDIS_TTL);
+                }
+                type = KafkaType.CHANGE_TO_DISLIKE;
+                response = "Like -> Dislike";
             }
         } else {
             LikeShare likeShare = LikeShare.builder()
                     .content(content)
                     .userId(request.getUserId())
                     .likeOrDislike(LikeOrDislikeEnums.DISLIKE)
-                    .comment(false)
                     .likeAndDislikeAt(LocalDateTime.now())
                     .build();
             likeShareRepository.save(likeShare);
-
             if (cached != null) {
                 cached.setDislikeCount(cached.getDislikeCount() + 1);
                 redisService.set(cacheKey, cached, REDIS_TTL);
             }
+            response = "DisLiked";
+            type = KafkaType.DISLIKE;
         }
-
-        log.info("Content disliked successfully ID: {} by user: {}", request.getContentId(), request.getUserId());
-    }
-
-    @Transactional
-    public void removeLikeDislike(LikeDislikeRequest request) {
-        log.info("Removing like/dislike for content ID: {} by user: {}", request.getContentId(), request.getUserId());
-
-        if (request.getContentId() == null) {
-            throw new IllegalArgumentException("Content ID is required");
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(type, map);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in DisLike Message due to {}" , e.getMessage());
         }
-
-        if (request.getUserId() == null) {
-            throw new IllegalArgumentException("User ID is required");
-        }
-
-        LikeShare existing = likeShareRepository.findByContentIdAndUserId(request.getContentId(), request.getUserId())
-                .orElse(null);
-
-        if (existing == null) {
-            log.warn("No like/dislike found for content ID: {} by user: {}", request.getContentId(),
-                    request.getUserId());
-            return;
-        }
-
-        LikeOrDislikeEnums previousStatus = existing.getLikeOrDislike();
-        likeShareRepository.delete(existing);
-
-        String cacheKey = RedisKey.CONTENT_ + request.getContentId().toString();
-        ContentDetailResponse cached = redisService.get(cacheKey, ContentDetailResponse.class);
-        if (cached != null) {
-            if (previousStatus == LikeOrDislikeEnums.LIKE) {
-                cached.setLikeCount(Math.max(0, cached.getLikeCount() - 1));
-            } else if (previousStatus == LikeOrDislikeEnums.DISLIKE) {
-                cached.setDislikeCount(Math.max(0, cached.getDislikeCount() - 1));
-            }
-            redisService.set(cacheKey, cached, REDIS_TTL);
-        }
-
-        log.info("Like/dislike removed for content ID: {} by user: {}", request.getContentId(),
-                request.getUserId());
+        log.info("Content {} successfully ID: {} by user: {}", response, request.getContentId(), request.getUserId());
+        return InteractionDto.builder()
+                .output(response).build();
     }
 
     @Transactional
@@ -673,6 +739,16 @@ public class ContentServiceImpl {
             redisService.set(cacheKey, cached, REDIS_TTL);
         }
 
+        Map<String, Object> map = new HashMap<>();
+        map.put(KafkaDomain.CONTENT_ID.toString(), contentId.toString());
+        map.put(KafkaDomain.USER_ID.toString(), userId.toString());
+        map.put(KafkaDomain.TIME_OF_CREATION.toString(), LocalDateTime.now());
+        try {
+            entityManager.flush();
+            kafkaService.sendContentEvent(KafkaType.SHARE, map);
+        } catch (Exception e) {
+            log.error("Failed to Kafka event in DisLike Message due to {}" , e.getMessage());
+        }
         log.info("Content shared successfully ID: {} by user: {}", contentId, userId);
     }
 }

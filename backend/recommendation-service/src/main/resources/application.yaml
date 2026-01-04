@@ -16,7 +16,6 @@ spring:
         format_sql: create
     show-sql: true
 
-
   kafka:
     bootstrap-servers: kafka:9092
     consumer:
@@ -28,13 +27,11 @@ spring:
         spring.json.value.default.type: com.project.recommendation_service.domain.dto.KafkaDto
         auto-offset-reset: earliest
 
-
 server:
   port: 11116
 
 springdoc:
   swagger-ui:
-    config-url: /api/content/v3/api-docs/swagger-config
-    url: /api/content/v3/api-docs
+    config-url: /api/recommendation/v3/api-docs/swagger-config
+    url: /api/recommendation/v3/api-docs
     path: /v3/swagger-ui
-

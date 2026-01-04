@@ -29,9 +29,6 @@ public class LikeShare {
     private LikeOrDislikeEnums likeOrDislike;
 
     @Column(nullable = false)
-    private Boolean comment;
-
-    @Column(nullable = false)
     private UUID userId;
 
     @Column(nullable = false)
