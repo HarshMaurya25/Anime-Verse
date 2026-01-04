@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -51,6 +53,13 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     WHERE f.following.id = :id
 """)
     Page<GetFollowResponse> getFollower(@Param("id") UUID id , Pageable pageable);
+
+    @Query(
+            "SELECT f.following.id " +
+            "FROM Follow f "+
+            "WHERE f.follower.id = :id"
+    )
+    Set<UUID> getFollowingForUser(@Param("id")UUID id);
 
     Boolean existsByFollower_IdAndFollowing_Id(UUID id, UUID id1);
 }

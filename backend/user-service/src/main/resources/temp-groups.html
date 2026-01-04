@@ -235,6 +235,44 @@
         white-space: pre-wrap;
         word-break: break-all;
       }
+      /* JWT/ID Selector */
+      .jwt-selector {
+        margin-top: 20px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .jwt-selector h3 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+      }
+      .user-select-btn {
+        padding: 10px 16px;
+        border-radius: 10px;
+        margin-right: 10px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+      }
+      .user-select-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .user-select-btn.active {
+        background: linear-gradient(135deg, #6b21a8, #0ea5b5);
+        border-color: transparent;
+      }
+      .current-user-info {
+        margin-top: 10px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 11px;
+        word-break: break-all;
+      }
     </style>
   </head>
   <body>
@@ -261,6 +299,30 @@
       </header>
 
       <div class="grid" id="groups-list"></div>
+
+      <!-- JWT/ID Selector Section -->
+      <div class="jwt-selector">
+        <h3>🔑 Active User & JWT</h3>
+        <div>
+          <button
+            id="select-user1"
+            class="btn user-select-btn active"
+            onclick="switchUser('user1')"
+          >
+            User 1 (79e4aef7...)
+          </button>
+          <button
+            id="select-user2"
+            class="btn user-select-btn"
+            onclick="switchUser('user2')"
+          >
+            User 2 (8f23bdad...)
+          </button>
+        </div>
+        <div id="current-user-display" class="current-user-info">
+          Active: User 1 (79e4aef7...)
+        </div>
+      </div>
 
       <!-- Group API Tester Section -->
       <div class="api-tester">
@@ -289,6 +351,35 @@
           </button>
         </div>
         <div id="api-result" class="result-box hidden"></div>
+      </div>
+
+      <!-- User API Tester Section -->
+      <div class="api-tester">
+        <h3>👤 User API Tester</h3>
+        <div class="api-grid">
+          <button class="btn api-btn get" id="api-get-user">
+            <span class="method-tag">GET</span><br />Get User
+          </button>
+          <button class="btn api-btn post" id="api-follow-user">
+            <span class="method-tag">POST</span><br />Follow User
+          </button>
+          <button class="btn api-btn delete" id="api-unfollow-user">
+            <span class="method-tag">DELETE</span><br />Unfollow User
+          </button>
+          <button class="btn api-btn get" id="api-get-followers">
+            <span class="method-tag">GET</span><br />Get Followers
+          </button>
+          <button class="btn api-btn get" id="api-get-following">
+            <span class="method-tag">GET</span><br />Get Following
+          </button>
+          <button class="btn api-btn put" id="api-update-profile">
+            <span class="method-tag">PUT</span><br />Update Profile
+          </button>
+          <button class="btn api-btn put" id="api-update-user-image">
+            <span class="method-tag">PUT</span><br />Update Image
+          </button>
+        </div>
+        <div id="user-api-result" class="result-box hidden"></div>
       </div>
     </div>
 
@@ -603,6 +694,328 @@
       </div>
     </div>
 
+    <!-- Get User Modal -->
+    <div id="get-user-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0">Get User</h2>
+            <small class="hint">Retrieve user profile by ID</small>
+          </div>
+          <div><button class="btn modal-close-btn">✕</button></div>
+        </div>
+        <div id="get-user-msg" class="hidden"></div>
+        <div style="margin-bottom: 10px">
+          <label>User ID (UUID)</label>
+          <input id="get-user-id" type="text" placeholder="User UUID" />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label
+            ><input type="checkbox" id="get-user-image" /> Include Image</label
+          >
+        </div>
+        <div class="footer">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button
+            id="get-user-submit"
+            class="btn"
+            style="background: linear-gradient(135deg, #059669, #0d9488)"
+          >
+            Get User
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Follow User Modal -->
+    <div id="follow-user-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0">Follow User</h2>
+            <small class="hint">Follow another user</small>
+          </div>
+          <div><button class="btn modal-close-btn">✕</button></div>
+        </div>
+        <div id="follow-user-msg" class="hidden"></div>
+        <div style="margin-bottom: 10px">
+          <label>Your User ID (UUID)</label>
+          <input id="follow-user-id" type="text" placeholder="Your UUID" />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Target User ID (UUID)</label>
+          <input
+            id="follow-target-id"
+            type="text"
+            placeholder="User to follow UUID"
+          />
+        </div>
+        <div class="footer">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button
+            id="follow-user-submit"
+            class="btn"
+            style="background: linear-gradient(135deg, #2563eb, #7c3aed)"
+          >
+            Follow
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unfollow User Modal -->
+    <div id="unfollow-user-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0">Unfollow User</h2>
+            <small class="hint">Unfollow a user</small>
+          </div>
+          <div><button class="btn modal-close-btn">✕</button></div>
+        </div>
+        <div id="unfollow-user-msg" class="hidden"></div>
+        <div style="margin-bottom: 10px">
+          <label>Your User ID (UUID)</label>
+          <input id="unfollow-user-id" type="text" placeholder="Your UUID" />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Target User ID (UUID)</label>
+          <input
+            id="unfollow-target-id"
+            type="text"
+            placeholder="User to unfollow UUID"
+          />
+        </div>
+        <div class="footer">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button
+            id="unfollow-user-submit"
+            class="btn"
+            style="background: linear-gradient(135deg, #dc2626, #be123c)"
+          >
+            Unfollow
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Get Followers Modal -->
+    <div id="get-followers-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0">Get Followers</h2>
+            <small class="hint">Get list of followers for a user</small>
+          </div>
+          <div><button class="btn modal-close-btn">✕</button></div>
+        </div>
+        <div id="get-followers-msg" class="hidden"></div>
+        <div style="margin-bottom: 10px">
+          <label>User ID (UUID)</label>
+          <input
+            id="get-followers-user-id"
+            type="text"
+            placeholder="User UUID"
+          />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Page Number</label>
+          <input id="get-followers-page" type="number" value="0" min="0" />
+        </div>
+        <div class="footer">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button
+            id="get-followers-submit"
+            class="btn"
+            style="background: linear-gradient(135deg, #059669, #0d9488)"
+          >
+            Get Followers
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Get Following Modal -->
+    <div id="get-following-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0">Get Following</h2>
+            <small class="hint">Get list of users being followed</small>
+          </div>
+          <div><button class="btn modal-close-btn">✕</button></div>
+        </div>
+        <div id="get-following-msg" class="hidden"></div>
+        <div style="margin-bottom: 10px">
+          <label>User ID (UUID)</label>
+          <input
+            id="get-following-user-id"
+            type="text"
+            placeholder="User UUID"
+          />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Page Number</label>
+          <input id="get-following-page" type="number" value="0" min="0" />
+        </div>
+        <div class="footer">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button
+            id="get-following-submit"
+            class="btn"
+            style="background: linear-gradient(135deg, #059669, #0d9488)"
+          >
+            Get Following
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update User Profile Modal -->
+    <div id="update-user-profile-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0">Update User Profile</h2>
+            <small class="hint">Update user profile details</small>
+          </div>
+          <div><button class="btn modal-close-btn">✕</button></div>
+        </div>
+        <div id="update-user-profile-msg" class="hidden"></div>
+        <div style="margin-bottom: 10px">
+          <label>User ID (UUID)</label>
+          <input
+            id="update-profile-user-id"
+            type="text"
+            placeholder="User UUID"
+          />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Display Name (optional)</label>
+          <input
+            id="update-profile-displayname"
+            type="text"
+            placeholder="New display name"
+          />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Bio (optional)</label>
+          <textarea
+            id="update-profile-bio"
+            rows="2"
+            placeholder="New bio..."
+          ></textarea>
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Location (optional)</label>
+          <input
+            id="update-profile-location"
+            type="text"
+            placeholder="New location"
+          />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Date of Birth (optional)</label>
+          <input id="update-profile-dob" type="date" />
+        </div>
+        <div class="footer">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button
+            id="update-user-profile-submit"
+            class="btn"
+            style="background: linear-gradient(135deg, #d97706, #ea580c)"
+          >
+            Update Profile
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update User Image Modal -->
+    <div id="update-user-image-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0">Update User Image</h2>
+            <small class="hint">Update profile image</small>
+          </div>
+          <div><button class="btn modal-close-btn">✕</button></div>
+        </div>
+        <div id="update-user-image-msg" class="hidden"></div>
+        <div style="margin-bottom: 10px">
+          <label>User ID (UUID)</label>
+          <input
+            id="update-user-image-id"
+            type="text"
+            placeholder="User UUID"
+          />
+        </div>
+        <div style="margin-bottom: 10px">
+          <label>Profile Image</label>
+          <input id="update-user-image-file" type="file" accept="image/*" />
+        </div>
+        <div class="footer">
+          <button class="btn modal-close-btn">Cancel</button>
+          <button
+            id="update-user-image-submit"
+            class="btn"
+            style="background: linear-gradient(135deg, #d97706, #ea580c)"
+          >
+            Update Image
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal -->
     <div id="modal" class="modal-backdrop hidden" aria-hidden="true">
       <div
@@ -776,9 +1189,49 @@
 
     <script>
       // Configuration: using the user-provided id and bearer token
-      const LEADER_ID = "79e4aef7-914f-468f-8d86-4c9869773b9c";
-      const BEARER_TOKEN =
-        "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInR5cGUiOiJBQ0NFU1MiLCJzdWIiOiI3OWU0YWVmNy05MTRmLTQ2OGYtOGQ4Ni00Yzk4Njk3NzNiOWMiLCJpYXQiOjE3NjY0OTg2OTUsImV4cCI6MTc2OTA5MDY5NX0.FzFgNYHw8rXNFqsAxlPIpvCmEXzewlloo-nG5ueJGVg";
+      const TOKENS = {
+        user1: {
+          id: "79e4aef7-914f-468f-8d86-4c9869773b9c",
+          token:
+            "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInR5cGUiOiJBQ0NFU1MiLCJzdWIiOiI3OWU0YWVmNy05MTRmLTQ2OGYtOGQ4Ni00Yzk4Njk3NzNiOWMiLCJpYXQiOjE3NjY0OTg2OTUsImV4cCI6MTc2OTA5MDY5NX0.FzFgNYHw8rXNFqsAxlPIpvCmEXzewlloo-nG5ueJGVg",
+          label: "User 1 (79e4aef7...)",
+        },
+        user2: {
+          id: "8f23bdad-1514-48ba-bb2b-496c3eae6774",
+          token:
+            "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInR5cGUiOiJBQ0NFU1MiLCJzdWIiOiI4ZjIzYmRhZC0xNTE0LTQ4YmEtYmIyYi00OTZjM2VhZTY3NzQiLCJpYXQiOjE3NjYzOTY0MjgsImV4cCI6MTc2ODk4ODQyOH0.WsxYEtj2-gXTxbNjeKuFcj-V8hzIQVd7f3UZ1PvPh98",
+          label: "User 2 (8f23bdad...)",
+        },
+      };
+
+      let currentUser = "user1";
+      const LEADER_ID = TOKENS[currentUser].id;
+      let BEARER_TOKEN = TOKENS[currentUser].token;
+
+      function getCurrentUserId() {
+        return TOKENS[currentUser].id;
+      }
+
+      function getCurrentToken() {
+        return TOKENS[currentUser].token;
+      }
+
+      function switchUser(userKey) {
+        currentUser = userKey;
+        BEARER_TOKEN = TOKENS[userKey].token;
+        updateActiveUserDisplay();
+      }
+
+      function updateActiveUserDisplay() {
+        document.querySelectorAll(".user-select-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        const activeBtn = document.getElementById("select-" + currentUser);
+        if (activeBtn) activeBtn.classList.add("active");
+        const display = document.getElementById("current-user-display");
+        if (display)
+          display.textContent = `Active: ${TOKENS[currentUser].label}`;
+      }
 
       // Seed groups to display initially
       const seedGroups = [
@@ -960,7 +1413,11 @@
         submitBtn.textContent = "Creating...";
 
         try {
-          const dto = { groupName: name, groupBio: bio, leaderId: LEADER_ID };
+          const dto = {
+            groupName: name,
+            groupBio: bio,
+            leaderId: getCurrentUserId(),
+          };
           const formData = new FormData();
           formData.append(
             "requestDto",
@@ -970,12 +1427,17 @@
           formData.append("bgImage", bgFile);
 
           const url = "http://localhost:11111/api/profile/group/create";
-          console.log("POST", url, "Authorization present:", !!BEARER_TOKEN);
+          console.log(
+            "POST",
+            url,
+            "Authorization present:",
+            !!getCurrentToken()
+          );
 
           const res = await fetch(url, {
             method: "POST",
             body: formData,
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) {
@@ -1179,7 +1641,7 @@
           const res = await fetch(url, {
             method: "POST",
             body: formData,
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
           });
 
           const body = await res.json().catch(() => ({}));
@@ -1266,7 +1728,7 @@
         try {
           const url = `${BASE_URL}/group/get?id=${groupId}&image=${includeImage}`;
           const res = await fetch(url, {
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
           });
           const body = await res.json();
           if (!res.ok)
@@ -1284,7 +1746,7 @@
       el("api-join-group").addEventListener("click", () => {
         el("join-group-modal").classList.remove("hidden");
         el("join-group-id").value = "";
-        el("join-user-id").value = LEADER_ID;
+        el("join-user-id").value = getCurrentUserId();
       });
 
       el("join-group-submit").addEventListener("click", async () => {
@@ -1305,7 +1767,7 @@
           const url = `${BASE_URL}/group/join?groupId=${groupId}&userId=${userId}`;
           const res = await fetch(url, {
             method: "POST",
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
@@ -1324,7 +1786,7 @@
       el("api-leave-group").addEventListener("click", () => {
         el("leave-group-modal").classList.remove("hidden");
         el("leave-group-id").value = "";
-        el("leave-user-id").value = LEADER_ID;
+        el("leave-user-id").value = getCurrentUserId();
       });
 
       el("leave-group-submit").addEventListener("click", async () => {
@@ -1345,7 +1807,7 @@
           const url = `${BASE_URL}/group/leave?groupId=${groupId}&userId=${userId}`;
           const res = await fetch(url, {
             method: "POST",
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
@@ -1386,7 +1848,7 @@
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
-              Authorization: "Bearer " + BEARER_TOKEN,
+              Authorization: "Bearer " + getCurrentToken(),
             },
             body: JSON.stringify({ id: groupId, bio: bio }),
           });
@@ -1435,7 +1897,7 @@
 
           const res = await fetch(url, {
             method: "PUT",
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
             body: formData,
           });
           const body = await res.json().catch(() => ({}));
@@ -1457,7 +1919,7 @@
       el("api-change-leader").addEventListener("click", () => {
         el("change-leader-modal").classList.remove("hidden");
         el("change-leader-group-id").value = "";
-        el("change-leader-current-id").value = LEADER_ID;
+        el("change-leader-current-id").value = getCurrentUserId();
         el("change-leader-new-id").value = "";
       });
 
@@ -1476,7 +1938,7 @@
           const url = `${BASE_URL}/group/leader/change?groupId=${groupId}&currentLeaderId=${currentLeaderId}&newLeaderId=${newLeaderId}`;
           const res = await fetch(url, {
             method: "PUT",
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok)
@@ -1497,7 +1959,7 @@
       el("api-delete-group").addEventListener("click", () => {
         el("delete-group-modal").classList.remove("hidden");
         el("delete-group-id").value = "";
-        el("delete-leader-id").value = LEADER_ID;
+        el("delete-leader-id").value = getCurrentUserId();
       });
 
       el("delete-group-submit").addEventListener("click", async () => {
@@ -1518,7 +1980,7 @@
           const url = `${BASE_URL}/group/delete?groupId=${groupId}&leaderId=${leaderId}`;
           const res = await fetch(url, {
             method: "DELETE",
-            headers: { Authorization: "Bearer " + BEARER_TOKEN },
+            headers: { Authorization: "Bearer " + getCurrentToken() },
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
@@ -1532,6 +1994,320 @@
           );
         } catch (err) {
           showResult(err.message, true);
+          showModalMsg(msgEl, "error", err.message);
+        }
+      });
+
+      // ==================== USER API TESTER FUNCTIONALITY ====================
+      const userApiResult = el("user-api-result");
+
+      function showUserResult(data, isError = false) {
+        userApiResult.classList.remove("hidden");
+        userApiResult.style.color = isError ? "#fca5a5" : "#86efac";
+        userApiResult.textContent =
+          typeof data === "string" ? data : JSON.stringify(data, null, 2);
+      }
+
+      // GET User
+      el("api-get-user").addEventListener("click", () => {
+        el("get-user-modal").classList.remove("hidden");
+        el("get-user-id").value = getCurrentUserId();
+        el("get-user-image").checked = false;
+      });
+
+      el("get-user-submit").addEventListener("click", async () => {
+        const userId = el("get-user-id").value.trim();
+        const includeImage = el("get-user-image").checked;
+        const msgEl = el("get-user-msg");
+
+        if (!userId) {
+          showModalMsg(msgEl, "error", "User ID is required");
+          return;
+        }
+
+        try {
+          const url = `${BASE_URL}/user/profile/get?id=${userId}&image=${includeImage}`;
+          const res = await fetch(url, {
+            headers: { Authorization: "Bearer " + getCurrentToken() },
+          });
+          const body = await res.json();
+          if (!res.ok)
+            throw new Error(body.message || `Failed (${res.status})`);
+          showUserResult(body);
+          showModalMsg(msgEl, "success", "User retrieved successfully!");
+          setTimeout(() => el("get-user-modal").classList.add("hidden"), 800);
+        } catch (err) {
+          showUserResult(err.message, true);
+          showModalMsg(msgEl, "error", err.message);
+        }
+      });
+
+      // FOLLOW User
+      el("api-follow-user").addEventListener("click", () => {
+        el("follow-user-modal").classList.remove("hidden");
+        el("follow-user-id").value = getCurrentUserId();
+        el("follow-target-id").value = "";
+      });
+
+      el("follow-user-submit").addEventListener("click", async () => {
+        const userId = el("follow-user-id").value.trim();
+        const targetId = el("follow-target-id").value.trim();
+        const msgEl = el("follow-user-msg");
+
+        if (!userId || !targetId) {
+          showModalMsg(
+            msgEl,
+            "error",
+            "Both User ID and Target ID are required"
+          );
+          return;
+        }
+
+        try {
+          const url = `${BASE_URL}/user/${userId}/follow/${targetId}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { Authorization: "Bearer " + getCurrentToken() },
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.message || `Failed (${res.status})`);
+          }
+          showUserResult("Successfully followed user!");
+          showModalMsg(msgEl, "success", "Followed successfully!");
+          setTimeout(
+            () => el("follow-user-modal").classList.add("hidden"),
+            800
+          );
+        } catch (err) {
+          showUserResult(err.message, true);
+          showModalMsg(msgEl, "error", err.message);
+        }
+      });
+
+      // UNFOLLOW User
+      el("api-unfollow-user").addEventListener("click", () => {
+        el("unfollow-user-modal").classList.remove("hidden");
+        el("unfollow-user-id").value = getCurrentUserId();
+        el("unfollow-target-id").value = "";
+      });
+
+      el("unfollow-user-submit").addEventListener("click", async () => {
+        const userId = el("unfollow-user-id").value.trim();
+        const targetId = el("unfollow-target-id").value.trim();
+        const msgEl = el("unfollow-user-msg");
+
+        if (!userId || !targetId) {
+          showModalMsg(
+            msgEl,
+            "error",
+            "Both User ID and Target ID are required"
+          );
+          return;
+        }
+
+        try {
+          const url = `${BASE_URL}/user/${userId}/follow/${targetId}`;
+          const res = await fetch(url, {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + getCurrentToken() },
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.message || `Failed (${res.status})`);
+          }
+          showUserResult("Successfully unfollowed user!");
+          showModalMsg(msgEl, "success", "Unfollowed successfully!");
+          setTimeout(
+            () => el("unfollow-user-modal").classList.add("hidden"),
+            800
+          );
+        } catch (err) {
+          showUserResult(err.message, true);
+          showModalMsg(msgEl, "error", err.message);
+        }
+      });
+
+      // GET Followers
+      el("api-get-followers").addEventListener("click", () => {
+        el("get-followers-modal").classList.remove("hidden");
+        el("get-followers-user-id").value = getCurrentUserId();
+        el("get-followers-page").value = "0";
+      });
+
+      el("get-followers-submit").addEventListener("click", async () => {
+        const userId = el("get-followers-user-id").value.trim();
+        const page = el("get-followers-page").value.trim();
+        const msgEl = el("get-followers-msg");
+
+        if (!userId) {
+          showModalMsg(msgEl, "error", "User ID is required");
+          return;
+        }
+
+        try {
+          const url = `${BASE_URL}/user/follower/list?id=${userId}&page=${page}`;
+          const res = await fetch(url, {
+            headers: { Authorization: "Bearer " + getCurrentToken() },
+          });
+          const body = await res.json();
+          if (!res.ok)
+            throw new Error(body.message || `Failed (${res.status})`);
+          showUserResult(body);
+          showModalMsg(msgEl, "success", "Followers retrieved successfully!");
+          setTimeout(
+            () => el("get-followers-modal").classList.add("hidden"),
+            800
+          );
+        } catch (err) {
+          showUserResult(err.message, true);
+          showModalMsg(msgEl, "error", err.message);
+        }
+      });
+
+      // GET Following
+      el("api-get-following").addEventListener("click", () => {
+        el("get-following-modal").classList.remove("hidden");
+        el("get-following-user-id").value = getCurrentUserId();
+        el("get-following-page").value = "0";
+      });
+
+      el("get-following-submit").addEventListener("click", async () => {
+        const userId = el("get-following-user-id").value.trim();
+        const page = el("get-following-page").value.trim();
+        const msgEl = el("get-following-msg");
+
+        if (!userId) {
+          showModalMsg(msgEl, "error", "User ID is required");
+          return;
+        }
+
+        try {
+          const url = `${BASE_URL}/user/following/list?id=${userId}&page=${page}`;
+          const res = await fetch(url, {
+            headers: { Authorization: "Bearer " + getCurrentToken() },
+          });
+          const body = await res.json();
+          if (!res.ok)
+            throw new Error(body.message || `Failed (${res.status})`);
+          showUserResult(body);
+          showModalMsg(msgEl, "success", "Following retrieved successfully!");
+          setTimeout(
+            () => el("get-following-modal").classList.add("hidden"),
+            800
+          );
+        } catch (err) {
+          showUserResult(err.message, true);
+          showModalMsg(msgEl, "error", err.message);
+        }
+      });
+
+      // UPDATE User Profile
+      el("api-update-profile").addEventListener("click", () => {
+        el("update-user-profile-modal").classList.remove("hidden");
+        el("update-profile-user-id").value = getCurrentUserId();
+        el("update-profile-displayname").value = "";
+        el("update-profile-bio").value = "";
+        el("update-profile-location").value = "";
+        el("update-profile-dob").value = "";
+      });
+
+      el("update-user-profile-submit").addEventListener("click", async () => {
+        const userId = el("update-profile-user-id").value.trim();
+        const displayName = el("update-profile-displayname").value.trim();
+        const bio = el("update-profile-bio").value.trim();
+        const location = el("update-profile-location").value.trim();
+        const dateOfBirth = el("update-profile-dob").value;
+        const msgEl = el("update-user-profile-msg");
+
+        if (!userId) {
+          showModalMsg(msgEl, "error", "User ID is required");
+          return;
+        }
+
+        const updateData = {};
+        if (displayName) updateData.displayName = displayName;
+        if (bio) updateData.bio = bio;
+        if (location) updateData.location = location;
+        if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+
+        if (Object.keys(updateData).length === 0) {
+          showModalMsg(
+            msgEl,
+            "error",
+            "At least one field to update is required"
+          );
+          return;
+        }
+
+        try {
+          const url = `${BASE_URL}/user/profile/update?id=${userId}`;
+          const res = await fetch(url, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + getCurrentToken(),
+            },
+            body: JSON.stringify(updateData),
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok)
+            throw new Error(body.message || `Failed (${res.status})`);
+          showUserResult(body);
+          showModalMsg(msgEl, "success", "Profile updated successfully!");
+          setTimeout(
+            () => el("update-user-profile-modal").classList.add("hidden"),
+            800
+          );
+        } catch (err) {
+          showUserResult(err.message, true);
+          showModalMsg(msgEl, "error", err.message);
+        }
+      });
+
+      // UPDATE User Image
+      el("api-update-user-image").addEventListener("click", () => {
+        el("update-user-image-modal").classList.remove("hidden");
+        el("update-user-image-id").value = getCurrentUserId();
+        el("update-user-image-file").value = "";
+      });
+
+      el("update-user-image-submit").addEventListener("click", async () => {
+        const userId = el("update-user-image-id").value.trim();
+        const imageFile = el("update-user-image-file").files[0];
+        const msgEl = el("update-user-image-msg");
+
+        if (!userId) {
+          showModalMsg(msgEl, "error", "User ID is required");
+          return;
+        }
+
+        if (!imageFile) {
+          showModalMsg(msgEl, "error", "Image file is required");
+          return;
+        }
+
+        try {
+          const url = `${BASE_URL}/user/profile/image/update?id=${userId}`;
+          const formData = new FormData();
+          formData.append("file", imageFile);
+
+          const res = await fetch(url, {
+            method: "PUT",
+            headers: { Authorization: "Bearer " + getCurrentToken() },
+            body: formData,
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok)
+            throw new Error(body.message || `Failed (${res.status})`);
+          showUserResult(body);
+          showModalMsg(msgEl, "success", "Image updated successfully!");
+          setTimeout(
+            () => el("update-user-image-modal").classList.add("hidden"),
+            800
+          );
+        } catch (err) {
+          showUserResult(err.message, true);
           showModalMsg(msgEl, "error", err.message);
         }
       });

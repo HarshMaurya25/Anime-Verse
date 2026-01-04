@@ -1,5 +1,7 @@
 package com.project.user_service.repository;
 
+import com.project.user_service.domain.dto.response.UserProfileResponseDto;
+import com.project.user_service.domain.entity.users.Follow;
 import com.project.user_service.domain.entity.users.Users;
 import com.project.user_service.repository.UsersRepository;
 

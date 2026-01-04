@@ -1,4 +1,4 @@
-package com.project.user_service.config;
+package com.project.recommendation_service.config;
 
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +20,7 @@ public class SecurityConfig {
         public final HeaderFilterChain headerFilterChain;
 
         @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
+        public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
                 return httpSecurity
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(auth -> auth
@@ -29,11 +29,7 @@ public class SecurityConfig {
                                                                 "/swagger-ui/**",
                                                                 "/v3/swagger-ui/**",
                                                                 "/swagger-ui.html",
-                                                                "/error",
-                                                                "/grpc.**",
-                                                                "/Recommendation/**",
-                                                                "/recommendation/**",
-                                                                "/recommendation.Recommendation/**")
+                                                                "/error")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -50,8 +51,6 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
     WHERE u.id = :id AND u.enable = true
 """)
     Optional<UserProfileResponseDto> getUserWithDetails(UUID id);
-
-
 
     boolean existsByIdAndEnableTrue(UUID id);
 }

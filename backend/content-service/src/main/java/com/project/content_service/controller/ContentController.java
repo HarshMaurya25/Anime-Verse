@@ -52,7 +52,8 @@ public class ContentController {
             Authentication authentication) {
         UUID authId = getAuthenticatedUserId(authentication);
         if (!authId.equals(currentUserId)) {
-            log.warn("Forbidden access: Authenticated user {} tried to access group-members for user {}", authId, currentUserId);
+            log.warn("Forbidden access: Authenticated user {} tried to access group-members for user {}", authId,
+                    currentUserId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(recommendationService.getContentOfGroupMembers(groupId, currentUserId, page));
@@ -66,7 +67,9 @@ public class ContentController {
             Authentication authentication) {
         UUID authId = getAuthenticatedUserId(authentication);
         if (!authId.equals(userId) || !authId.equals(currentUserId)) {
-            log.warn("Forbidden access: Authenticated user {} tried to access all-groups-members for user {} and currentUserId {}", authId, userId, currentUserId);
+            log.warn(
+                    "Forbidden access: Authenticated user {} tried to access all-groups-members for user {} and currentUserId {}",
+                    authId, userId, currentUserId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(recommendationService.getContentOfAllGroupsMembers(userId, currentUserId, page));
