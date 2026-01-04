@@ -204,18 +204,33 @@ public class ContentServiceImpl {
         }
 
         String cacheKey = RedisKey.CONTENT_ + contentId.toString();
-        ContentDetailResponse cached = redisService.get(cacheKey, ContentDetailResponse.class);
+        String mediaCacheKey = RedisKey.CONTENT_MEDIA_ + contentId.toString();
 
-        if (cached != null) {
+        ContentDetailResponse cached = redisService.get(cacheKey, ContentDetailResponse.class);
+        ContentMediaResponse mediaResponse = redisService.get(mediaCacheKey, ContentMediaResponse.class);
+
+        if (cached != null && mediaResponse != null) {
+            redisService.set(cacheKey, cached, REDIS_TTL);
+            redisService.set(mediaCacheKey, mediaResponse, REDIS_TTL);
+
             if (userId != null) {
-                likeShareRepository.findByContentIdAndUserId(contentId, userId).ifPresent(likeShare -> {
-                    cached.setIsLiked(likeShare.getLikeOrDislike() == LikeOrDislikeEnums.LIKE);
-                    cached.setIsDisliked(likeShare.getLikeOrDislike() == LikeOrDislikeEnums.DISLIKE);
-                });
+                likeShareRepository.findByContentIdAndUserId(contentId, userId).ifPresentOrElse(
+                        likeShare -> {
+                            cached.setIsLiked(likeShare.getLikeOrDislike() == LikeOrDislikeEnums.LIKE);
+                            cached.setIsDisliked(likeShare.getLikeOrDislike() == LikeOrDislikeEnums.DISLIKE);
+                        },
+                        () -> {
+                            cached.setIsLiked(false);
+                            cached.setIsDisliked(false);
+                        });
+            } else {
+                cached.setIsLiked(false);
+                cached.setIsDisliked(false);
             }
 
             if (includeMedia) {
-                loadMediaFromCacheOrDb(contentId, cached);
+                cached.setMedia(mediaResponse.getMedia());
+                cached.setMediaType(mediaResponse.getMediaType());
             }
 
             return cached;
@@ -227,7 +242,22 @@ public class ContentServiceImpl {
                     return new ContentNotFoundException("Content with ID: " + contentId + " not found");
                 });
 
-        redisService.set(cacheKey, response, REDIS_TTL);
+        ContentDetailResponse cacheResponse = ContentDetailResponse.builder()
+                .id(response.getId())
+                .title(response.getTitle())
+                .bio(response.getBio())
+                .userID(response.getUserID())
+                .userName(response.getUserName())
+                .displayName(response.getDisplayName())
+                .likeCount(response.getLikeCount())
+                .dislikeCount(response.getDislikeCount())
+                .commentCount(response.getCommentCount())
+                .shareCount(response.getShareCount())
+                .isLiked(response.getIsLiked())
+                .isDisliked(response.getIsDisliked())
+                .created(response.getCreated())
+                .build();
+        redisService.set(cacheKey, cacheResponse, REDIS_TTL);
 
         if (includeMedia) {
             loadMediaFromCacheOrDb(contentId, response);
@@ -246,13 +276,13 @@ public class ContentServiceImpl {
             response.setMediaType(cachedMedia.getMediaType());
         } else {
             contentRepository.getMediaById(contentId).ifPresent(media -> {
-                response.setMedia((byte[]) media[0]);
-                response.setMediaType((String) media[1]);
+                response.setMedia(media.getContent());
+                response.setMediaType(media.getContentType());
 
                 ContentMediaResponse mediaResponse = ContentMediaResponse.builder()
                         .id(contentId)
-                        .media((byte[]) media[0])
-                        .mediaType((String) media[1])
+                        .media(media.getContent())
+                        .mediaType(media.getContentType())
                         .build();
                 redisService.set(mediaCacheKey, mediaResponse, REDIS_TTL);
             });
@@ -276,7 +306,7 @@ public class ContentServiceImpl {
             page = 0;
         }
 
-        Pageable pageable = PageRequest.of(page, MAX_IDS_LIMIT);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
         Page<ContentDetailResponse> responsePage = contentRepository.getContentDetailsByIds(contentIds, userId,
                 pageable);
 
@@ -285,22 +315,50 @@ public class ContentServiceImpl {
             return responsePage;
         }
 
+        responsePage.getContent().forEach(response -> {
+            String cacheKey = RedisKey.CONTENT_ + response.getId().toString();
+            ContentDetailResponse cacheResponse = ContentDetailResponse.builder()
+                    .id(response.getId())
+                    .title(response.getTitle())
+                    .bio(response.getBio())
+                    .userID(response.getUserID())
+                    .userName(response.getUserName())
+                    .displayName(response.getDisplayName())
+                    .likeCount(response.getLikeCount())
+                    .dislikeCount(response.getDislikeCount())
+                    .commentCount(response.getCommentCount())
+                    .shareCount(response.getShareCount())
+                    .isLiked(response.getIsLiked())
+                    .isDisliked(response.getIsDisliked())
+                    .created(response.getCreated())
+                    .build();
+            redisService.set(cacheKey, cacheResponse, REDIS_TTL);
+        });
+
         if (includeMedia) {
             List<UUID> ids = responsePage.getContent().stream()
                     .map(ContentDetailResponse::getId)
                     .collect(Collectors.toList());
 
-            List<Object[]> mediaList = contentRepository.getMediaByIds(ids);
-            Map<UUID, Object[]> mediaMap = mediaList.stream()
+            List<ContentMedia> mediaList = contentRepository.getMediaByIds(ids);
+            Map<UUID, ContentMedia> mediaMap = mediaList.stream()
                     .collect(Collectors.toMap(
-                            m -> (UUID) m[0],
+                            ContentMedia::getId,
                             m -> m));
 
             responsePage.getContent().forEach(response -> {
-                Object[] media = mediaMap.get(response.getId());
+                ContentMedia media = mediaMap.get(response.getId());
                 if (media != null) {
-                    response.setMedia((byte[]) media[1]);
-                    response.setMediaType((String) media[2]);
+                    response.setMedia(media.getContent());
+                    response.setMediaType(media.getContentType());
+
+                    String mediaCacheKey = RedisKey.CONTENT_MEDIA_ + response.getId().toString();
+                    ContentMediaResponse mediaResponse = ContentMediaResponse.builder()
+                            .id(response.getId())
+                            .media(media.getContent())
+                            .mediaType(media.getContentType())
+                            .build();
+                    redisService.set(mediaCacheKey, mediaResponse, REDIS_TTL);
                 }
             });
         }
@@ -321,7 +379,7 @@ public class ContentServiceImpl {
             page = 0;
         }
 
-        Pageable pageable = PageRequest.of(page, MAX_IDS_LIMIT);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 
         Page<ContentDetailResponse> responsePage = contentRepository.getContentDetailsByUserId(userId, currentUserId,
                 pageable);
@@ -331,22 +389,50 @@ public class ContentServiceImpl {
             return responsePage;
         }
 
+        responsePage.getContent().forEach(response -> {
+            String cacheKey = RedisKey.CONTENT_ + response.getId().toString();
+            ContentDetailResponse cacheResponse = ContentDetailResponse.builder()
+                    .id(response.getId())
+                    .title(response.getTitle())
+                    .bio(response.getBio())
+                    .userID(response.getUserID())
+                    .userName(response.getUserName())
+                    .displayName(response.getDisplayName())
+                    .likeCount(response.getLikeCount())
+                    .dislikeCount(response.getDislikeCount())
+                    .commentCount(response.getCommentCount())
+                    .shareCount(response.getShareCount())
+                    .isLiked(response.getIsLiked())
+                    .isDisliked(response.getIsDisliked())
+                    .created(response.getCreated())
+                    .build();
+            redisService.set(cacheKey, cacheResponse, REDIS_TTL);
+        });
+
         if (includeMedia) {
             List<UUID> contentIds = responsePage.getContent().stream()
                     .map(ContentDetailResponse::getId)
                     .collect(Collectors.toList());
 
-            List<Object[]> mediaList = contentRepository.getMediaByIds(contentIds);
-            Map<UUID, Object[]> mediaMap = mediaList.stream()
+            List<ContentMedia> mediaList = contentRepository.getMediaByIds(contentIds);
+            Map<UUID, ContentMedia> mediaMap = mediaList.stream()
                     .collect(Collectors.toMap(
-                            m -> (UUID) m[0],
+                            ContentMedia::getId,
                             m -> m));
 
             responsePage.getContent().forEach(response -> {
-                Object[] media = mediaMap.get(response.getId());
+                ContentMedia media = mediaMap.get(response.getId());
                 if (media != null) {
-                    response.setMedia((byte[]) media[1]);
-                    response.setMediaType((String) media[2]);
+                    response.setMedia(media.getContent());
+                    response.setMediaType(media.getContentType());
+
+                    String mediaCacheKey = RedisKey.CONTENT_MEDIA_ + response.getId().toString();
+                    ContentMediaResponse mediaResponse = ContentMediaResponse.builder()
+                            .id(response.getId())
+                            .media(media.getContent())
+                            .mediaType(media.getContentType())
+                            .build();
+                    redisService.set(mediaCacheKey, mediaResponse, REDIS_TTL);
                 }
             });
         }

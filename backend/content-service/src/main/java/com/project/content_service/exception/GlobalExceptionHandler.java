@@ -163,6 +163,14 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(NoFollowingException.class)
+    public ResponseEntity<List<ApiError>> handleNoFollowingException(NoFollowingException exception) {
+        return buildError(
+                exception.getMessage(),
+                "No Following Exception",
+                HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(UsernameOrEmailAlreadyExistsException.class)
     public ResponseEntity<List<ApiError>> handleUserAlreadyExists(UsernameOrEmailAlreadyExistsException exception) {
         return buildError(

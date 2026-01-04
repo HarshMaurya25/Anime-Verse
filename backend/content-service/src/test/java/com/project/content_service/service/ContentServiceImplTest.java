@@ -8,6 +8,7 @@ import com.project.content_service.domain.dto.response.ContentDetailResponse;
 import com.project.content_service.domain.dto.response.ContentMediaResponse;
 import com.project.content_service.domain.dto.response.ContentResponse;
 import com.project.content_service.domain.entity.Content;
+import com.project.content_service.domain.entity.ContentMedia;
 import com.project.content_service.domain.entity.LikeShare;
 import com.project.content_service.domain.enums.Category;
 import com.project.content_service.domain.enums.Genre;
@@ -374,7 +375,11 @@ class ContentServiceImplTest {
             when(redisService.get(anyString(), eq(ContentDetailResponse.class))).thenReturn(null);
             when(contentRepository.getContentDetailById(contentId, null)).thenReturn(Optional.of(testDetailResponse));
             when(redisService.get(anyString(), eq(ContentMediaResponse.class))).thenReturn(null);
-            Object[] mediaData = new Object[] { "test".getBytes(), "image/jpeg" };
+            ContentMedia mediaData = ContentMedia.builder()
+                    .id(contentId)
+                    .content("test".getBytes())
+                    .contentType("image/jpeg")
+                    .build();
             when(contentRepository.getMediaById(contentId)).thenReturn(Optional.of(mediaData));
 
             ContentDetailResponse result = contentService.getContentDetailById(contentId, null, true);
@@ -464,8 +469,12 @@ class ContentServiceImplTest {
             Page<ContentDetailResponse> page = new PageImpl<>(List.of(testDetailResponse));
             when(contentRepository.getContentDetailsByIds(eq(ids), any(), any(Pageable.class))).thenReturn(page);
 
-            List<Object[]> mediaList = new ArrayList<>();
-            mediaList.add(new Object[] { contentId, "test".getBytes(), "image/jpeg" });
+            List<ContentMedia> mediaList = new ArrayList<>();
+            mediaList.add(ContentMedia.builder()
+                    .id(contentId)
+                    .content("test".getBytes())
+                    .contentType("image/jpeg")
+                    .build());
             when(contentRepository.getMediaByIds(anyList())).thenReturn(mediaList);
 
             Page<ContentDetailResponse> result = contentService.getContentsByIds(ids, null, 0, true);

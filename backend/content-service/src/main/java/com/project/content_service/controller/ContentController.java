@@ -13,8 +13,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,8 +26,62 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/content")
 public class ContentController {
+    private static final Logger log = LoggerFactory.getLogger(ContentController.class);
 
     private final ContentServiceImpl contentService;
+    private final com.project.content_service.service.Recommendation recommendationService;
+
+    @GetMapping("/recommendation/following")
+    public ResponseEntity<Page<ContentDetailResponse>> getContentOfUserFollowing(
+            @RequestParam UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            Authentication authentication) {
+        UUID authId = getAuthenticatedUserId(authentication);
+        if (!authId.equals(userId)) {
+            log.warn("Forbidden access: Authenticated user {} tried to access following for user {}", authId, userId);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(recommendationService.getContentOfUserFollowing(userId, page));
+    }
+
+    @GetMapping("/recommendation/group-members")
+    public ResponseEntity<Page<ContentDetailResponse>> getContentOfGroupMembers(
+            @RequestParam UUID groupId,
+            @RequestParam UUID currentUserId,
+            @RequestParam(defaultValue = "0") int page,
+            Authentication authentication) {
+        UUID authId = getAuthenticatedUserId(authentication);
+        if (!authId.equals(currentUserId)) {
+            log.warn("Forbidden access: Authenticated user {} tried to access group-members for user {}", authId, currentUserId);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(recommendationService.getContentOfGroupMembers(groupId, currentUserId, page));
+    }
+
+    @GetMapping("/recommendation/all-groups-members")
+    public ResponseEntity<Page<ContentDetailResponse>> getContentOfAllGroupsMembers(
+            @RequestParam UUID userId,
+            @RequestParam UUID currentUserId,
+            @RequestParam(defaultValue = "0") int page,
+            Authentication authentication) {
+        UUID authId = getAuthenticatedUserId(authentication);
+        if (!authId.equals(userId) || !authId.equals(currentUserId)) {
+            log.warn("Forbidden access: Authenticated user {} tried to access all-groups-members for user {} and currentUserId {}", authId, userId, currentUserId);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(recommendationService.getContentOfAllGroupsMembers(userId, currentUserId, page));
+    }
+
+    private UUID getAuthenticatedUserId(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+            return UUID.fromString(userDetails.getUsername());
+        } else if (principal instanceof String str) {
+            // Fallback if principal is just a string
+            return UUID.fromString(str);
+        }
+        throw new IllegalArgumentException("Cannot extract user id from authentication principal");
+    }
 
     @PreAuthorize("authentication.principal.id.equals(#request.userID)")
     @PostMapping("/create")
@@ -38,7 +95,7 @@ public class ContentController {
     @GetMapping("/get")
     public ResponseEntity<ContentDetailResponse> getContentById(
             @RequestParam UUID contentId,
-            @RequestParam(required = false) UUID currentUserId,
+            @RequestParam UUID currentUserId,
             @RequestParam(defaultValue = "true") boolean includeMedia) {
         ContentDetailResponse response = contentService.getContentDetailById(contentId, currentUserId, includeMedia);
         return ResponseEntity.ok(response);
@@ -47,7 +104,7 @@ public class ContentController {
     @GetMapping("/get/batch")
     public ResponseEntity<Page<ContentDetailResponse>> getContentsByIds(
             @RequestParam List<UUID> contentIds,
-            @RequestParam(required = false) UUID currentUserId,
+            @RequestParam UUID currentUserId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "true") boolean includeMedia) {
         Page<ContentDetailResponse> responses = contentService.getContentsByIds(contentIds, currentUserId, page,
@@ -58,7 +115,7 @@ public class ContentController {
     @GetMapping("/user")
     public ResponseEntity<Page<ContentDetailResponse>> getContentsByUserId(
             @RequestParam UUID userId,
-            @RequestParam(required = false) UUID currentUserId,
+            @RequestParam UUID currentUserId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "true") boolean includeMedia) {
         Page<ContentDetailResponse> responses = contentService.getContentsByUserId(userId, currentUserId, page,
