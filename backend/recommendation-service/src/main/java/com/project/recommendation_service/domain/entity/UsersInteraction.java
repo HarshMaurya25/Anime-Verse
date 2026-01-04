@@ -36,20 +36,10 @@ public class UsersInteraction {
     @Column(name = "is_commented")
     private Boolean comment;
 
+    @Column(name = "is_shared")
+    private Boolean share;
+
     @Column
     private LocalDateTime interactAt;
 
-    private List<String> contentTag;
-
-    // @PrePersist
-    // private void createAt() {
-    // if (interactAt == null) {
-    // interactAt = LocalDateTime.now();
-    // }
-    // }
-
-    // @PreUpdate
-    // private void updateAt() {
-    // interactAt = LocalDateTime.now();
-    // }
 }

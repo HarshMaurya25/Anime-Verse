@@ -14,4 +14,10 @@ import java.util.UUID;
 @Repository
 public interface InteractRepository extends JpaRepository<UsersInteraction , UUID> {
 
+    @Query(
+            "SELECT i FROM UsersInteraction i WHERE i.userId = :userId AND i.content.contentId = :contentId"
+    )
+    UsersInteraction findByUserIdAndContent(
+            @Param("userId") UUID userId,
+            @Param("contentId") UUID contentId);
 }

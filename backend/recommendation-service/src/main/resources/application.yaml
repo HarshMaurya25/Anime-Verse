@@ -16,5 +16,18 @@ spring:
         format_sql: create
     show-sql: true
 
+
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: recommendation
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.project.recommendation_service.domain.dto.KafkaDto
+        auto-offset-reset: earliest
+
+
 server:
   port: 11116
