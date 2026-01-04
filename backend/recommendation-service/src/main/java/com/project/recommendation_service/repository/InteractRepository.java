@@ -222,4 +222,104 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
             nativeQuery = true
     )
     Set<RecommendationResult> getRecommendation(@Param("id") UUID id);
+
+
+    @Query(value = """ 
+          WITH constants AS (
+              SELECT
+                  0.5  ::numeric AS category_factor,
+                  1.0  ::numeric AS genre_factor,
+                  30.0 ::numeric AS content_time_half_life,
+                  0.4  ::numeric AS mean_score_weight
+          ),
+          
+          raw_content_scores AS (
+              SELECT
+                  c.content_id,
+                  c.content_title,
+                  c.username,
+                  c.like_count,
+                  c.dislike_count,
+                  c.comment_count,
+                  (
+                      cns.mean_score_weight
+                      * (2 * COALESCE(c.like_count,0)
+                       + 4 * COALESCE(c.comment_count,0)
+                       + 6 * COALESCE(c.share_count,0))::numeric
+                      / NULLIF(
+                          2 * c.like_count
+                        + 5 * c.dislike_count
+                        + 6 * c.share_count
+                        + 4 * c.comment_count,
+                        0
+                      )
+                      + 1
+                  ) AS mean_score,
+                  c.time_of_creation
+              FROM content c
+              CROSS JOIN constants cns
+          ),
+          
+          preference_treatment_scores AS (
+              SELECT
+                  rcs.*,
+          
+                  COUNT(DISTINCT cc.category) AS category_match_count,
+                  COUNT(DISTINCT cg.genre)    AS genre_match_count,
+          
+                  (rcs.mean_score + 1) *
+                  (
+                      1
+                      + c.category_factor * COUNT(DISTINCT cc.category)
+                      + c.genre_factor    * COUNT(DISTINCT cg.genre)
+                  ) AS weighted_score
+          
+              FROM raw_content_scores rcs
+              CROSS JOIN constants c
+          
+              LEFT JOIN content_categories cc
+                  ON cc.content_id = rcs.content_id
+                 AND cc.category IN (:categories)
+          
+              LEFT JOIN content_genres cg
+                  ON cg.content_id = rcs.content_id
+                 AND cg.genre IN (:genres)
+          
+              GROUP BY
+                  rcs.content_id,
+                  rcs.content_title,
+                  rcs.username,
+                  rcs.like_count,
+                  rcs.dislike_count,
+                  rcs.comment_count,
+                  rcs.mean_score,
+                  rcs.time_of_creation,
+                  c.category_factor,
+                  c.genre_factor
+          ),
+          
+          decay_time_score AS (
+              SELECT
+                  pts.*,
+                  pts.weighted_score
+                  * EXP(
+                      -LN(2)
+                      * EXTRACT(DAY FROM (NOW() - pts.time_of_creation))
+                      / c.content_time_half_life
+                  ) AS final_score
+              FROM preference_treatment_scores pts
+              CROSS JOIN constants c
+          )
+          
+          SELECT *
+          FROM decay_time_score
+          ORDER BY final_score DESC
+          LIMIT 20;
+          
+    """, nativeQuery = true)
+    Set<RecommendationResult> getRecommendationByPreferences(
+            @Param("categories") Set<String> categories,
+            @Param("genres") Set<String> genres
+    );
+
 }
