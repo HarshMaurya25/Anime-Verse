@@ -210,7 +210,6 @@ services:
   content-database:
     image: postgres:16
     container_name: content-database
-
     environment:
       POSTGRES_DB: anime_verse
       POSTGRES_USER: anime_verse
