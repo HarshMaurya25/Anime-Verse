@@ -31,3 +31,10 @@ spring:
 
 server:
   port: 11116
+
+springdoc:
+  swagger-ui:
+    config-url: /api/content/v3/api-docs/swagger-config
+    url: /api/content/v3/api-docs
+    path: /v3/swagger-ui
+

@@ -4,11 +4,15 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
-@Table()
+@Table(
+        name = "users_interaction",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_user_content",
+                columnNames = {"user_id", "content_id"}
+        )
+)
 @Entity
 @Setter
 @Getter

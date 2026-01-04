@@ -50,6 +50,8 @@ public class Content {
 
     private long commentCount;
 
+    private long shareCount;
+
     private Boolean enable;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "content")

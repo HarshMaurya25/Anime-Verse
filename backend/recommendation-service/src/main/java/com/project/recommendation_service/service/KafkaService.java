@@ -3,6 +3,7 @@ package com.project.recommendation_service.service;
 import com.project.recommendation_service.domain.entity.Content;
 import com.project.recommendation_service.domain.entity.UsersInteraction;
 import com.project.recommendation_service.domain.enums.KafkaDomain;
+import com.project.recommendation_service.exception.ContentNotFoundException;
 import com.project.recommendation_service.exception.InteractionNotFoundException;
 import com.project.recommendation_service.repository.ContentRepository;
 import com.project.recommendation_service.repository.InteractRepository;
@@ -52,6 +53,7 @@ public class KafkaService {
                 .likeCount(0)
                 .dislikeCount(0)
                 .commentCount(0)
+                .shareCount(0)
                 .category(category)
                 .genre(genre)
                 .contentTag(tags)
@@ -69,7 +71,7 @@ public class KafkaService {
         Content content = contentRepository.findById(id)
                         .orElseThrow(() -> {
                             log.error("Content is not found : {}" , id.toString());
-                            return new UsernameNotFoundException("Content : " + id.toString());
+                            return new ContentNotFoundException("Content : " + id.toString());
                         });
 
         contentRepository.delete(content);
@@ -81,7 +83,7 @@ public class KafkaService {
         int update = contentRepository.updateEnableById(id , false);
         if(update == 0){
             log.error("Content is not found : {} for Disable" , id.toString());
-            throw new UsernameNotFoundException("Content : "+ id.toString());
+            throw new ContentNotFoundException("Content : "+ id.toString());
         }else{
             log.info("Content with id : {} is diable" , id.toString());
         }
@@ -93,7 +95,7 @@ public class KafkaService {
         int update = contentRepository.updateEnableById(id , true);
         if(update == 0){
             log.error("Content is not found : {} for Enable" , id.toString());
-            throw new UsernameNotFoundException("Content : "+ id.toString());
+            throw new ContentNotFoundException("Content : "+ id.toString());
         }else{
             log.info("Content with id : {} is enable" , id.toString());
         }
@@ -110,16 +112,14 @@ public class KafkaService {
                 timeList.get(3), timeList.get(4), timeList.get(5), timeList.get(6)
         );
 
-
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> {
+                    log.error("Content : {} doesn't found in Like" , contentId);
+                    throw new ContentNotFoundException("Content not found with id : " + contentId.toString());
+                });
         UsersInteraction interaction = interactRepository.findByUserIdAndContent(userId , contentId);
 
         if(interaction == null){
-            Content content = contentRepository.findById(contentId)
-                    .orElseThrow(() -> {
-                        log.error("Content : {} doesn't found in Like" , contentId);
-                        throw new UsernameNotFoundException("Content not found with id : " + contentId.toString());
-                    });
-
             interaction = UsersInteraction
                     .builder()
                     .userId(userId)
@@ -132,13 +132,15 @@ public class KafkaService {
                     .build();
 
             interactRepository.save(interaction);
-            return;
         }else{
             interaction.setLike(true);
             interaction.setDislike(false);
 
             interactRepository.save(interaction);
         }
+
+        content.setLikeCount(content.getLikeCount() + 1);
+        contentRepository.save(content);
         log.info("User : {} liked the content with Id : {}", userId ,contentId );
     }
 
@@ -153,14 +155,14 @@ public class KafkaService {
                 timeList.get(3), timeList.get(4), timeList.get(5), timeList.get(6)
         );
 
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> {
+                    log.error("Content : {} doesn't found in Dislike" , contentId);
+                    throw new ContentNotFoundException("Content not found with id : " + contentId.toString());
+                });
         UsersInteraction interaction = interactRepository.findByUserIdAndContent(userId , contentId);
 
         if(interaction == null){
-            Content content = contentRepository.findById(contentId)
-                    .orElseThrow(() -> {
-                        log.error("Content : {} doesn't found in Dislike" , contentId);
-                        throw new UsernameNotFoundException("Content not found with id : " + contentId.toString());
-                    });
 
             interaction = UsersInteraction
                     .builder()
@@ -180,6 +182,8 @@ public class KafkaService {
 
             interactRepository.save(interaction);
         }
+        content.setDislikeCount(content.getDislikeCount() + 1);
+        contentRepository.save(content);
         log.info("User : {} disliked the content with Id : {}", userId ,contentId );
     }
 
@@ -194,14 +198,14 @@ public class KafkaService {
                 timeList.get(3), timeList.get(4), timeList.get(5), timeList.get(6)
         );
 
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> {
+                    log.error("Content : {} doesn't found in Share" , contentId);
+                    throw new ContentNotFoundException("Content not found with id : " + contentId.toString());
+                });
         UsersInteraction interaction = interactRepository.findByUserIdAndContent(userId , contentId);
 
         if(interaction == null){
-            Content content = contentRepository.findById(contentId)
-                    .orElseThrow(() -> {
-                        log.error("Content : {} doesn't found in Share" , contentId);
-                        throw new UsernameNotFoundException("Content not found with id : " + contentId.toString());
-                    });
 
             interaction = UsersInteraction
                     .builder()
@@ -220,6 +224,8 @@ public class KafkaService {
 
             interactRepository.save(interaction);
         }
+        content.setShareCount(content.getShareCount() + 1);
+        contentRepository.save(content);
         log.info("User : {} shared the content with Id : {}", userId ,contentId );
     }
 
@@ -234,14 +240,16 @@ public class KafkaService {
                 timeList.get(3), timeList.get(4), timeList.get(5), timeList.get(6)
         );
 
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> {
+                    log.error("Content : {} doesn't found in comment" , contentId);
+                    throw new ContentNotFoundException("Content not found with id : " + contentId.toString());
+                });
+
         UsersInteraction interaction = interactRepository.findByUserIdAndContent(userId , contentId);
 
         if(interaction == null){
-            Content content = contentRepository.findById(contentId)
-                    .orElseThrow(() -> {
-                        log.error("Content : {} doesn't found in comment" , contentId);
-                        throw new UsernameNotFoundException("Content not found with id : " + contentId.toString());
-                    });
+
 
             interaction = UsersInteraction
                     .builder()
@@ -260,6 +268,9 @@ public class KafkaService {
 
             interactRepository.save(interaction);
         }
+
+        content.setCommentCount(content.getCommentCount() + 1);
+        contentRepository.save(content);
         log.info("User : {} comment the content with Id : {}", userId ,contentId );
     }
 
@@ -284,6 +295,7 @@ public class KafkaService {
 
             interactRepository.save(interaction);
         }
+        contentRepository.decreamentLikeCount(contentId);
         log.info("User : {} remove like the content with Id : {}", userId ,contentId );
     }
 
@@ -307,6 +319,8 @@ public class KafkaService {
 
             interactRepository.save(interaction);
         }
+
+        contentRepository.decreamentDislikeCount(contentId);
         log.info("User : {} remove dislike the content with Id : {}", userId ,contentId );
     }
 
@@ -330,6 +344,7 @@ public class KafkaService {
             interaction.setLike(true);
 
             interactRepository.save(interaction);
+            contentRepository.dislikeToLikeCount(contentId);
         }
         log.info("User : {} remove dislike to like the content with Id : {}", userId ,contentId );
     }
@@ -354,6 +369,7 @@ public class KafkaService {
             interaction.setLike(false);
 
             interactRepository.save(interaction);
+            contentRepository.likeToDisLikeCount(contentId);
         }
         log.info("User : {} remove like to dislike the content with Id : {}", userId ,contentId );
     }
