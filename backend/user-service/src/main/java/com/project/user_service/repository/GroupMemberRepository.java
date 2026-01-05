@@ -1,11 +1,14 @@
 package com.project.user_service.repository;
 
+import com.project.user_service.domain.dto.response.GetGroups;
+import com.project.user_service.domain.dto.response.GroupDetailResponseDto;
 import com.project.user_service.domain.entity.groups.GroupMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -30,5 +33,16 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> 
 
     @Query("SELECT gm.users.id FROM GroupMember gm WHERE gm.group.id = :groupId")
     Set<UUID> getAllMemberOfGroup(@Param("groupId") UUID groupID);
+
+    @Query(
+            "SELECT new com.project.user_service.domain.dto.response.GetGroups(" +
+                    "g.group.id ," +
+                    "g.group.groupName ," +
+                    "g.group.leader.username ," +
+                    "g.group.leader.id" +
+                    ")" +
+                    "FROM GroupMember g WHERE g.users.id = :id OR g.group.leader.id = :id"
+    )
+    List<GetGroups> getGroupOfUser(@Param("id") UUID id);
 
 }

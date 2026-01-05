@@ -2,6 +2,7 @@ package com.project.user_service.controller;
 
 import com.project.user_service.domain.dto.request.BioUpdateGroupRequestDto;
 import com.project.user_service.domain.dto.request.CreateGroupRequestDto;
+import com.project.user_service.domain.dto.response.GetGroups;
 import com.project.user_service.domain.dto.response.GroupResponseDto;
 import com.project.user_service.service.GroupService;
 import jakarta.validation.Valid;
@@ -93,5 +94,10 @@ public class GroupController {
             @RequestParam UUID userId) {
         groupService.leaveGroup(groupId, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<List<GetGroups>> getGroupsByUser(@PathVariable UUID id) {
+        return ResponseEntity.ok(groupService.getGroups(id));
     }
 }

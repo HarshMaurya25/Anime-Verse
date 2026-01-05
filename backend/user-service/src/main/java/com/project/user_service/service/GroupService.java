@@ -2,6 +2,7 @@ package com.project.user_service.service;
 
 import com.project.user_service.domain.dto.request.BioUpdateGroupRequestDto;
 import com.project.user_service.domain.dto.request.CreateGroupRequestDto;
+import com.project.user_service.domain.dto.response.GetGroups;
 import com.project.user_service.domain.dto.response.GroupResponseDto;
 import com.project.user_service.domain.entity.groups.Group;
 import com.project.user_service.domain.entity.groups.GroupMember;
@@ -516,4 +517,7 @@ public class GroupService {
         return groupMemberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
     }
 
+    public List<GetGroups> getGroups(UUID id){
+        return groupMemberRepository.getGroupOfUser(id);
+    }
 }

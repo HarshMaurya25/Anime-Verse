@@ -1,5 +1,6 @@
 package com.project.user_service.repository;
 
+import com.project.user_service.domain.dto.response.GroupDetailResponseDto;
 import com.project.user_service.domain.dto.response.GroupResponseDto;
 import com.project.user_service.domain.entity.groups.Group;
 import com.project.user_service.domain.entity.groups.ImageGroup;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,4 +41,5 @@ public interface GroupRepository extends JpaRepository<Group, UUID> {
         @Modifying
         @Query("UPDATE Group g SET g.bio = :bio WHERE g.id = :id AND g.enable = true")
         int updateTheBio(@Param("id") UUID id, @Param("bio") String bio);
+
 }
