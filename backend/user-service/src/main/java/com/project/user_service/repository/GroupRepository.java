@@ -26,9 +26,11 @@ public interface GroupRepository extends JpaRepository<Group, UUID> {
                         "g.leader.displayName, " +
                         "SIZE(g.members) + 1, " +
                         "g.dateOfCreation, " +
+                        "(CASE WHEN g.leader.id = :userId OR :userId IN (SELECT m.id FROM g.members m) THEN true ELSE false END),"
+                        +
                         "null, null, null, null) " +
                         "FROM Group g WHERE g.id = :id AND g.enable = true")
-        Optional<GroupResponseDto> getGroupById(@Param("id") UUID id);
+        Optional<GroupResponseDto> getGroupById(@Param("id") UUID id, @Param("userId") UUID userId);
 
         @Query("""
                             SELECT ig

@@ -28,10 +28,10 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> 
     """)
     Set<UUID> getUserGroups(@Param("userIds") Set<UUID> userIds);
 
-    @Query("SELECT gm.group.id FROM GroupMember gm WHERE gm.users.id = :id")
+    @Query("SELECT gm.group.id FROM GroupMember gm WHERE gm.users.id = :id OR gm.group.leader.id = :id")
     Set<UUID> getUserGroup(@Param("id") UUID userId);
 
-    @Query("SELECT gm.users.id FROM GroupMember gm WHERE gm.group.id = :groupId")
+    @Query("SELECT gm.users.id FROM GroupMember gm WHERE gm.group.id = :groupId OR gm.group.leader.id = :groupId")
     Set<UUID> getAllMemberOfGroup(@Param("groupId") UUID groupID);
 
     @Query(

@@ -9,6 +9,7 @@ import com.project.user_service.domain.entity.groups.GroupMember;
 import com.project.user_service.domain.entity.groups.ImageGroup;
 import com.project.user_service.domain.entity.users.Users;
 import com.project.user_service.domain.enums.RedisMethod;
+import com.project.user_service.domain.security.UserDetailCustom;
 import com.project.user_service.exception.customException.GroupNotFoundException;
 import com.project.user_service.exception.customException.ImageUploadFailedException;
 import com.project.user_service.exception.customException.UserNotFoundException;
@@ -19,6 +20,9 @@ import com.project.user_service.repository.UsersRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -162,7 +166,6 @@ public class GroupService {
 
             redisService.set(redisKey, groupResponseDto, TIME_REDIS);
 
-            // Return early if images not requested OR images already loaded in cache
             if (!giveImage || groupResponseDto.getProfileImage() != null) {
                 return groupResponseDto;
             }
@@ -178,14 +181,18 @@ public class GroupService {
 
             return groupResponseDto;
         }
-
-        Optional<GroupResponseDto> getResponseOption = groupRepository.getGroupById(id);
+        
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetailCustom userDetail;
+        if (principal instanceof UserDetailCustom) {
+            userDetail = (UserDetailCustom) principal;
+        } else {
+            throw new IllegalStateException("Principal is not of type UserDetailCustom");
+        }
+        Optional<GroupResponseDto> getResponseOption = groupRepository.getGroupById(id, userDetail.getId());
         if (getResponseOption.isEmpty()) {
             throw new GroupNotFoundException("Group : " + id);
         }
-
-        // Note: getGroupById already filters for enable = true, so no need to check
-        // again
 
         long time = TIME_REDIS + getResponseOption.get().getMemberCount();
         time = Math.min(time, TIME_REDIS_MAX);
@@ -517,7 +524,7 @@ public class GroupService {
         return groupMemberRepository.findByGroupIdAndUserId(groupId, userId).isPresent();
     }
 
-    public List<GetGroups> getGroups(UUID id){
+    public List<GetGroups> getGroups(UUID id) {
         return groupMemberRepository.getGroupOfUser(id);
     }
 }

@@ -22,6 +22,7 @@ public class GroupResponseDto {
     private String leaderDisplayName;
     private long memberCount;
     private LocalDate dateOfCreation;
+    private Boolean isMember;
     private byte[] profileImage;
     private String profileImageType;
     private byte[] bgImage;

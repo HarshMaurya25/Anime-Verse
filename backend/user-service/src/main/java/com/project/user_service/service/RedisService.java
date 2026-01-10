@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class RedisService {
 
     private RedisTemplate<String, Object> redisTemplate;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
     public RedisService(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
