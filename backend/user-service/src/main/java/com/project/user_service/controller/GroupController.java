@@ -100,4 +100,5 @@ public class GroupController {
     public ResponseEntity<List<GetGroups>> getGroupsByUser(@PathVariable UUID id) {
         return ResponseEntity.ok(groupService.getGroups(id));
     }
+//    hello
 }

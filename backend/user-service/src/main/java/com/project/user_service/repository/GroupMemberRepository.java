@@ -45,4 +45,10 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> 
     )
     List<GetGroups> getGroupOfUser(@Param("id") UUID id);
 
+
+    @Query("SELECT g.group.leader.id FROM GroupMember g WHERE g.users.id = :id")
+    Set<UUID> getAllGroupLeaderId(@Param("id") UUID id);
+
+    @Query("SELECT gm.users.id FROM GroupMember gm WHERE gm.group.id IN :ids")
+    Set<UUID> getGroupMemberByGroupId(@Param("ids") Set<UUID> ids);
 }

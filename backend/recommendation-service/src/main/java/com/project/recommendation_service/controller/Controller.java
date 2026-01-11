@@ -27,7 +27,7 @@ public class Controller {
         return new ResponseEntity<>(recommendationService.getRecommendation(id) ,HttpStatus.OK);
     }
 
-    @GetMapping("/first/get")
+    @PostMapping("/first/get")
     public ResponseEntity<Set<RecommendationResult>> getFirstFeed(
             @RequestBody FirstRecommendationRequest request
             ){

@@ -35,13 +35,7 @@ public class ContentController {
     @GetMapping("/recommendation/following")
     public ResponseEntity<Page<ContentDetailResponse>> getContentOfUserFollowing(
             @RequestParam UUID userId,
-            @RequestParam(defaultValue = "0") int page,
-            Authentication authentication) {
-        UUID authId = getAuthenticatedUserId(authentication);
-        if (!authId.equals(userId)) {
-            log.warn("Forbidden access: Authenticated user {} tried to access following for user {}", authId, userId);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            @RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(recommendationService.getContentOfUserFollowing(userId, page));
     }
 
@@ -49,31 +43,15 @@ public class ContentController {
     public ResponseEntity<Page<ContentDetailResponse>> getContentOfGroupMembers(
             @RequestParam UUID groupId,
             @RequestParam UUID currentUserId,
-            @RequestParam(defaultValue = "0") int page,
-            Authentication authentication) {
-        UUID authId = getAuthenticatedUserId(authentication);
-        if (!authId.equals(currentUserId)) {
-            log.warn("Forbidden access: Authenticated user {} tried to access group-members for user {}", authId,
-                    currentUserId);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            @RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(recommendationService.getContentOfGroupMembers(groupId, currentUserId, page));
     }
 
     @GetMapping("/recommendation/all-groups-members")
     public ResponseEntity<Page<ContentDetailResponse>> getContentOfAllGroupsMembers(
             @RequestParam UUID userId,
-            @RequestParam UUID currentUserId,
-            @RequestParam(defaultValue = "0") int page,
-            Authentication authentication) {
-        UUID authId = getAuthenticatedUserId(authentication);
-        if (!authId.equals(userId) || !authId.equals(currentUserId)) {
-            log.warn(
-                    "Forbidden access: Authenticated user {} tried to access all-groups-members for user {} and currentUserId {}",
-                    authId, userId, currentUserId);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        return ResponseEntity.ok(recommendationService.getContentOfAllGroupsMembers(userId, currentUserId, page));
+            @RequestParam(defaultValue = "0") int page) {
+        return ResponseEntity.ok(recommendationService.getContentOfAllGroupsMembers(userId, page));
     }
 
     private UUID getAuthenticatedUserId(Authentication authentication) {
@@ -81,7 +59,6 @@ public class ContentController {
         if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
             return UUID.fromString(userDetails.getUsername());
         } else if (principal instanceof String str) {
-            // Fallback if principal is just a string
             return UUID.fromString(str);
         }
         throw new IllegalArgumentException("Cannot extract user id from authentication principal");

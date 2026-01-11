@@ -63,6 +63,8 @@ public class GrpcServices {
 
                 recommendation.GetUserIds response = blockingStub.getUserAllGroupsMembersByUserId(request);
 
+                System.out.println(response.getUserIdsList().toString());
+
                 return response.getUserIdsList()
                                 .stream()
                                 .map(UUID::fromString)

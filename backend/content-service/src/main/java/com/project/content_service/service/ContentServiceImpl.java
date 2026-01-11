@@ -159,32 +159,25 @@ public class ContentServiceImpl {
 
     @Transactional
     public void deleteContent(UUID contentId) {
-        log.info("Deleting content with ID: {}", contentId);
 
-        if (contentId == null) {
-            throw new IllegalArgumentException("Content ID is required");
-        }
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> new ContentNotFoundException("Content not found"));
 
-        int deleted = contentRepository.deleteByContentId(contentId);
-        if (deleted == 0) {
-            log.warn("Content with ID: {} not found", contentId);
-            throw new ContentNotFoundException("Content with ID: " + contentId + " not found");
-        }
+        contentRepository.delete(content);
+
+        entityManager.flush();
 
         redisService.delete(RedisKey.CONTENT_ + contentId.toString());
         redisService.delete(RedisKey.CONTENT_MEDIA_ + contentId.toString());
+
+        kafkaService.sendContentEvent(
+                KafkaType.DELETE,
+                Map.of(KafkaDomain.CONTENT_ID.toString(), contentId.toString())
+        );
+
         log.info("Content deleted successfully with ID: {}", contentId);
-
-        Map<String, Object> objectMap = new HashMap<>();
-        objectMap.put(KafkaDomain.CONTENT_ID.toString(), contentId.toString());
-
-        try {
-            entityManager.flush();
-            kafkaService.sendContentEvent(KafkaType.DELETE, objectMap);
-        } catch (Exception e) {
-            log.error("Failed to Kafka event in Delete Message due to {}" , e.getMessage());
-        }
     }
+
 
     @Transactional
     public void disableContent(UUID contentId) {

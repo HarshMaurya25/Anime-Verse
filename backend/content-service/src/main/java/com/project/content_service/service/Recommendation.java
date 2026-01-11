@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,6 +44,7 @@ public class Recommendation {
     private static final long REDIS_TTL = 600L;
 
     public Page<ContentDetailResponse> getContentOfUserFollowing(UUID id, int pageNumber) {
+        log.trace("The user get content of user following by id ; {}" , id);
         return getContentByUserIds(grpcServices.getUserFollowing(id), id, pageNumber);
     }
 
@@ -50,20 +52,25 @@ public class Recommendation {
         return getContentByUserIds(grpcServices.getUserGroupMembersByGroupId(groupId), currentUserId, pageNumber);
     }
 
-    public Page<ContentDetailResponse> getContentOfAllGroupsMembers(UUID userId, UUID currentUserId, int pageNumber) {
-        return getContentByUserIds(grpcServices.getUserAllGroupsMembersByUserId(userId), currentUserId, pageNumber);
+    public Page<ContentDetailResponse> getContentOfAllGroupsMembers(UUID userId, int pageNumber) {
+        return getContentByUserIds(grpcServices.getUserAllGroupsMembersByUserId(userId), userId, pageNumber);
     }
 
     private Page<ContentDetailResponse> getContentByUserIds(List<UUID> ids, UUID currentUserId, int pageNumber) {
         if (ids == null || ids.isEmpty()) {
             throw new NoFollowingException("No user/group members found");
         }
+
+        System.out.println(Arrays.toString(ids.toArray()));
+
         if (pageNumber < 0) {
             pageNumber = 0;
         }
         Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE);
         Page<ContentDetailResponse> responsePage = contentRepository.getContentDetailsByUserIds(ids, currentUserId,
                 pageable);
+
+        log.trace("Content is got with number : {}" , responsePage.getSize());
         responsePage.getContent().forEach(response -> {
             String cacheKey = RedisKey.CONTENT_ + response.getId().toString();
             ContentDetailResponse cacheResponse = ContentDetailResponse.builder()
@@ -83,28 +90,27 @@ public class Recommendation {
                     .build();
             redisService.set(cacheKey, cacheResponse, REDIS_TTL);
         });
-        if (true) {
-            List<UUID> responseIds = responsePage.getContent().stream()
-                    .map(ContentDetailResponse::getId)
-                    .collect(Collectors.toList());
-            List<ContentMedia> mediaList = contentRepository.getMediaByIds(responseIds);
-            Map<UUID, ContentMedia> mediaMap = mediaList.stream()
-                    .collect(Collectors.toMap(ContentMedia::getId, m -> m));
-            responsePage.getContent().forEach(response -> {
-                ContentMedia media = mediaMap.get(response.getId());
-                if (media != null) {
-                    response.setMedia(media.getContent());
-                    response.setMediaType(media.getContentType());
-                    String mediaCacheKey = RedisKey.CONTENT_MEDIA_ + response.getId().toString();
-                    ContentMediaResponse mediaResponse = ContentMediaResponse.builder()
-                            .id(response.getId())
-                            .media(media.getContent())
-                            .mediaType(media.getContentType())
-                            .build();
-                    redisService.set(mediaCacheKey, mediaResponse, REDIS_TTL);
-                }
-            });
-        }
+        log.trace("Redis is done");
+        List<UUID> responseIds = responsePage.getContent().stream()
+                .map(ContentDetailResponse::getId)
+                .collect(Collectors.toList());
+        List<ContentMedia> mediaList = contentRepository.getMediaByIds(responseIds);
+        Map<UUID, ContentMedia> mediaMap = mediaList.stream()
+                .collect(Collectors.toMap(ContentMedia::getId, m -> m));
+        responsePage.getContent().forEach(response -> {
+            ContentMedia media = mediaMap.get(response.getId());
+            if (media != null) {
+                response.setMedia(media.getContent());
+                response.setMediaType(media.getContentType());
+                String mediaCacheKey = RedisKey.CONTENT_MEDIA_ + response.getId().toString();
+                ContentMediaResponse mediaResponse = ContentMediaResponse.builder()
+                        .id(response.getId())
+                        .media(media.getContent())
+                        .mediaType(media.getContentType())
+                        .build();
+                redisService.set(mediaCacheKey, mediaResponse, REDIS_TTL);
+            }
+        });
         log.info("Found {} contents for provided IDs", responsePage.getNumberOfElements());
         return responsePage;
     }

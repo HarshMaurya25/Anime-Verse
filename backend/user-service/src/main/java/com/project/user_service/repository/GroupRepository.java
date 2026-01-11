@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -43,5 +44,11 @@ public interface GroupRepository extends JpaRepository<Group, UUID> {
         @Modifying
         @Query("UPDATE Group g SET g.bio = :bio WHERE g.id = :id AND g.enable = true")
         int updateTheBio(@Param("id") UUID id, @Param("bio") String bio);
+
+        @Query("SELECT g.leader.id FROM Group g WHERE g.id = :id")
+        UUID getGroupLeaderId(@Param("id") UUID id);
+
+        @Query("SELECT g.leader.id FROM Group g WHERE g.id IN :id")
+        Set<UUID> getAllGroupLeaderId(@Param("id") Set<UUID> id);
 
 }

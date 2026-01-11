@@ -3,6 +3,7 @@ package com.project.user_service.grpcs;
 import com.project.user_service.domain.entity.users.Follow;
 import com.project.user_service.repository.FollowRepository;
 import com.project.user_service.repository.GroupMemberRepository;
+import com.project.user_service.repository.GroupRepository;
 import com.project.user_service.repository.UsersRepository;
 import io.grpc.stub.StreamObserver;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class GRPCService extends RecommendationGrpc.RecommendationImplBase {
     private final FollowRepository followRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UsersRepository usersRepository;
+    private final GroupRepository groupRepository;
 
     @Override
     public void getUserGroupMembersByGroupId(GetUserGroupMemberByGroupId request,
@@ -30,6 +32,7 @@ public class GRPCService extends RecommendationGrpc.RecommendationImplBase {
         UUID groupId = UUID.fromString(groupIdString);
 
         Set<UUID> groupIds = groupMemberRepository.getAllMemberOfGroup(groupId);
+        groupIds.add(groupRepository.getGroupLeaderId(groupId));
         GetUserIds groupIdResponse = GetUserIds.newBuilder()
                 .addAllUserIds(
                         groupIds.stream()
@@ -49,7 +52,11 @@ public class GRPCService extends RecommendationGrpc.RecommendationImplBase {
         String userIdString = request.getUserId();
         UUID userId = UUID.fromString(userIdString);
 
-        Set<UUID> userIds = groupMemberRepository.getUserGroup(userId);
+        Set<UUID> groupIds = groupMemberRepository.getUserGroup(userId);
+        Set<UUID> leaderIds = groupMemberRepository.getAllGroupLeaderId(userId);
+        Set<UUID> userIds = groupMemberRepository.getGroupMemberByGroupId(groupIds);
+        userIds.addAll(leaderIds);
+
         GetUserIds userIdResponse = GetUserIds.newBuilder()
                 .addAllUserIds(
                         userIds.stream()

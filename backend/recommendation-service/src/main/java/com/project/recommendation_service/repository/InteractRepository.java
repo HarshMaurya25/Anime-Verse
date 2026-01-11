@@ -14,36 +14,32 @@ import java.util.Set;
 import java.util.UUID;
 
 @Repository
-public interface InteractRepository extends JpaRepository<UsersInteraction , UUID> {
+public interface InteractRepository extends JpaRepository<UsersInteraction, UUID> {
 
-    @Query(
-            "SELECT i FROM UsersInteraction i WHERE i.userId = :userId AND i.content.contentId = :contentId"
-    )
+    @Query("SELECT i FROM UsersInteraction i WHERE i.userId = :userId AND i.content.contentId = :contentId")
     UsersInteraction findByUserIdAndContent(
             @Param("userId") UUID userId,
             @Param("contentId") UUID contentId);
 
-
-    @Query(
-            value = """
+    @Query(value = """
             WITH constants AS (
                 SELECT
             		2    ::int AS liked_power,
             		4    ::int AS comment_power,
             		-5   ::int AS dislike_power,
-                    6    ::int AS share_power,  
-            
+                    6    ::int AS share_power,
+
                     0.5  ::numeric AS category_factor,
                     1.0  ::numeric AS genre_factor,
                     0.8  ::numeric AS tag_factor,
-            
+
                     20.0 ::numeric AS interaction_index_half_life,
                     45.0 ::numeric AS interaction_time_half_life,
                     30.0 ::numeric AS content_time_half_life,
-            
+
                     0.4  ::numeric AS mean_score_weight
             ),
-            
+
             ordered_interactions AS (
                 SELECT
                     ui.user_id,
@@ -64,7 +60,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
             	CROSS JOIN constants c
                 WHERE ui.user_id = :id
             ),
-            
+
             interaction_scores AS (
                 SELECT
                     oi.content_content_id,
@@ -75,7 +71,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                 FROM ordered_interactions oi
                 CROSS JOIN constants c
             ),
-            
+
             category_stats AS (
                 SELECT
                     cc.category,
@@ -85,7 +81,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     ON cc.content_id = iscore.content_content_id
                 GROUP BY cc.category
             ),
-            
+
             category_affinity AS (
                 SELECT
                     category,
@@ -93,7 +89,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     / SUM(EXP(raw_category_score)) OVER () AS category_weight
                 FROM category_stats
             ),
-            
+
             genre_stats AS (
                 SELECT
                     cg.genre,
@@ -103,7 +99,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     ON cg.content_id = iscore.content_content_id
                 GROUP BY cg.genre
             ),
-            
+
             genre_affinity AS (
                 SELECT
                     genre,
@@ -111,7 +107,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     / SUM(EXP(raw_genre_score)) OVER () AS genre_weight
                 FROM genre_stats
             ),
-            
+
             tag_stats AS (
                 SELECT
                     tg.tag,
@@ -121,7 +117,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     ON tg.content_id = iscore.content_content_id
                 GROUP BY tg.tag
             ),
-            
+
             tag_affinity AS (
                 SELECT
                     tag,
@@ -129,7 +125,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     / SUM(EXP(raw_tag_score)) OVER () AS tag_weight
                 FROM tag_stats
             ),
-            
+
             raw_content_scores AS (
                 SELECT
                     c.content_id,
@@ -140,8 +136,16 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     c.comment_count,
                     (
                         cns.mean_score_weight
-                        * (2 * COALESCE(c.like_count,0) + 4 * COALESCE(c.comment_count,0) + 6 * COALESCE(c.share_count,0))::numeric
-                        / NULLIF(2 * c.like_count + 5 * c.dislike_count + 6 * c.share_count + 4 * c.comment_count, 1)
+                        * (2 * COALESCE(c.like_count, 0)
+                        + 4 * COALESCE(c.comment_count, 0)
+                        + 6 * COALESCE(c.share_count, 0))::numeric
+                        / NULLIF(
+                            2 * COALESCE(c.like_count, 0)
+                            + 5 * COALESCE(c.dislike_count, 0)
+                            + 6 * COALESCE(c.share_count, 0)
+                            + 4 * COALESCE(c.comment_count, 0),
+                            0
+                        )
                         + 1
                     ) AS mean_score,
                     c.time_of_creation
@@ -155,14 +159,14 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                       AND ui.interact_at >= NOW() - INTERVAL '30 days'
                 )
             ),
-            
+
             preference_treatment_scores AS (
                 SELECT
                     rcs.*,
                     COALESCE(SUM(DISTINCT ca.category_weight), 0) AS category_multiplier,
                     COALESCE(SUM(DISTINCT ga.genre_weight), 0)    AS genre_multiplier,
                     COALESCE(SUM(DISTINCT ta.tag_weight), 0)      AS tag_multiplier,
-            
+
                     (rcs.mean_score + 1) *
                     (
                         1
@@ -170,25 +174,25 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                         + c.genre_factor    * COALESCE(SUM(DISTINCT ga.genre_weight), 0)
                         + c.tag_factor      * COALESCE(SUM(DISTINCT ta.tag_weight), 0)
                     ) AS weighted_score
-            
+
                 FROM raw_content_scores rcs
                 CROSS JOIN constants c
-            
+
                 LEFT JOIN content_categories cc
                     ON cc.content_id = rcs.content_id
                 LEFT JOIN category_affinity ca
                     ON ca.category = cc.category
-            
+
                 LEFT JOIN content_genres cg
                     ON cg.content_id = rcs.content_id
                 LEFT JOIN genre_affinity ga
                     ON ga.genre = cg.genre
-            
+
                 LEFT JOIN content_tags ct
                     ON ct.content_id = rcs.content_id
                 LEFT JOIN tag_affinity ta
                     ON ta.tag = ct.tag
-            
+
                 GROUP BY
                     rcs.content_id,
                     rcs.content_title,
@@ -202,7 +206,7 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                     rcs.dislike_count,
                     rcs.comment_count
             ),
-            
+
             decay_time_score AS (
                 SELECT
                     pts.*,
@@ -213,113 +217,109 @@ public interface InteractRepository extends JpaRepository<UsersInteraction , UUI
                 FROM preference_treatment_scores pts
                 CROSS JOIN constants c
             )
-            
+
             SELECT *
             FROM decay_time_score
             ORDER BY final_score DESC
             LIMIT 20;
-            """,
-            nativeQuery = true
-    )
+            """, nativeQuery = true)
     Set<RecommendationResult> getRecommendation(@Param("id") UUID id);
 
+    @Query(value = """
+                  WITH constants AS (
+                      SELECT
+                          0.5  ::numeric AS category_factor,
+                          1.0  ::numeric AS genre_factor,
+                          30.0 ::numeric AS content_time_half_life,
+                          0.4  ::numeric AS mean_score_weight
+                  ),
 
-    @Query(value = """ 
-          WITH constants AS (
-              SELECT
-                  0.5  ::numeric AS category_factor,
-                  1.0  ::numeric AS genre_factor,
-                  30.0 ::numeric AS content_time_half_life,
-                  0.4  ::numeric AS mean_score_weight
-          ),
-          
-          raw_content_scores AS (
-              SELECT
-                  c.content_id,
-                  c.content_title,
-                  c.username,
-                  c.like_count,
-                  c.dislike_count,
-                  c.comment_count,
-                  (
-                      cns.mean_score_weight
-                      * (2 * COALESCE(c.like_count,0)
-                       + 4 * COALESCE(c.comment_count,0)
-                       + 6 * COALESCE(c.share_count,0))::numeric
-                      / NULLIF(
-                          2 * c.like_count
-                        + 5 * c.dislike_count
-                        + 6 * c.share_count
-                        + 4 * c.comment_count,
-                        0
-                      )
-                      + 1
-                  ) AS mean_score,
-                  c.time_of_creation
-              FROM content c
-              CROSS JOIN constants cns
-          ),
-          
-          preference_treatment_scores AS (
-              SELECT
-                  rcs.*,
-          
-                  COUNT(DISTINCT cc.category) AS category_match_count,
-                  COUNT(DISTINCT cg.genre)    AS genre_match_count,
-          
-                  (rcs.mean_score + 1) *
-                  (
-                      1
-                      + c.category_factor * COUNT(DISTINCT cc.category)
-                      + c.genre_factor    * COUNT(DISTINCT cg.genre)
-                  ) AS weighted_score
-          
-              FROM raw_content_scores rcs
-              CROSS JOIN constants c
-          
-              LEFT JOIN content_categories cc
-                  ON cc.content_id = rcs.content_id
-                 AND cc.category IN (:categories)
-          
-              LEFT JOIN content_genres cg
-                  ON cg.content_id = rcs.content_id
-                 AND cg.genre IN (:genres)
-          
-              GROUP BY
-                  rcs.content_id,
-                  rcs.content_title,
-                  rcs.username,
-                  rcs.like_count,
-                  rcs.dislike_count,
-                  rcs.comment_count,
-                  rcs.mean_score,
-                  rcs.time_of_creation,
-                  c.category_factor,
-                  c.genre_factor
-          ),
-          
-          decay_time_score AS (
-              SELECT
-                  pts.*,
-                  pts.weighted_score
-                  * EXP(
-                      -LN(2)
-                      * EXTRACT(DAY FROM (NOW() - pts.time_of_creation))
-                      / c.content_time_half_life
-                  ) AS final_score
-              FROM preference_treatment_scores pts
-              CROSS JOIN constants c
-          )
-          
-          SELECT *
-          FROM decay_time_score
-          ORDER BY final_score DESC
-          LIMIT 20;
-          
-    """, nativeQuery = true)
+                  raw_content_scores AS (
+                      SELECT
+                          c.content_id,
+                          c.content_title,
+                          c.username,
+                          c.like_count,
+                          c.dislike_count,
+                          c.comment_count,
+                          (
+                              cns.mean_score_weight
+                              * (2 * COALESCE(c.like_count, 0)
+                            + 4 * COALESCE(c.comment_count, 0)
+                            + 6 * COALESCE(c.share_count, 0))::numeric
+                            / NULLIF(
+                                2 * COALESCE(c.like_count, 0)
+                                + 5 * COALESCE(c.dislike_count, 0)
+                                + 6 * COALESCE(c.share_count, 0)
+                                + 4 * COALESCE(c.comment_count, 0),
+                                0
+                            )
+                              + 1
+                          ) AS mean_score,
+                          c.time_of_creation
+                      FROM content c
+                      CROSS JOIN constants cns
+                  ),
+
+                  preference_treatment_scores AS (
+                      SELECT
+                          rcs.*,
+
+                          COUNT(DISTINCT cc.category) AS category_match_count,
+                          COUNT(DISTINCT cg.genre)    AS genre_match_count,
+
+                          (rcs.mean_score + 1) *
+                          (
+                              1
+                              + c.category_factor * COUNT(DISTINCT cc.category)
+                              + c.genre_factor    * COUNT(DISTINCT cg.genre)
+                          ) AS weighted_score
+
+                      FROM raw_content_scores rcs
+                      CROSS JOIN constants c
+
+                      LEFT JOIN content_categories cc
+                          ON cc.content_id = rcs.content_id
+                         AND cc.category IN (:categories)
+
+                      LEFT JOIN content_genres cg
+                          ON cg.content_id = rcs.content_id
+                         AND cg.genre IN (:genres)
+
+                      GROUP BY
+                          rcs.content_id,
+                          rcs.content_title,
+                          rcs.username,
+                          rcs.like_count,
+                          rcs.dislike_count,
+                          rcs.comment_count,
+                          rcs.mean_score,
+                          rcs.time_of_creation,
+                          c.category_factor,
+                          c.genre_factor
+                  ),
+
+                  decay_time_score AS (
+                      SELECT
+                          pts.*,
+                          pts.weighted_score
+                          * EXP(
+                              -LN(2)
+                              * EXTRACT(DAY FROM (NOW() - pts.time_of_creation))
+                              / c.content_time_half_life
+                          ) AS final_score
+                      FROM preference_treatment_scores pts
+                      CROSS JOIN constants c
+                  )
+
+                  SELECT *
+                  FROM decay_time_score
+                  ORDER BY final_score DESC
+                  LIMIT 20;
+
+            """, nativeQuery = true)
     Set<RecommendationResult> getRecommendationByPreferences(
             @Param("categories") Set<String> categories,
-            @Param("genres") Set<String> genres
-    );
+            @Param("genres") Set<String> genres);
 
 }

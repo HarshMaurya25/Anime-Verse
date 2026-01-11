@@ -55,6 +55,9 @@ public class Content {
     @OneToMany(mappedBy = "content", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<Comments> comments;
 
+    @OneToMany(mappedBy = "content", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<Share> shares;
+
     @Column(nullable = false)
     private Boolean enable;
 
