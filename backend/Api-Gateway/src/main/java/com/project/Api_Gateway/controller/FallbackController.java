@@ -1,4 +1,4 @@
-package com.project.api_gateway.controller;
+package com.project.Api_Gateway.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;

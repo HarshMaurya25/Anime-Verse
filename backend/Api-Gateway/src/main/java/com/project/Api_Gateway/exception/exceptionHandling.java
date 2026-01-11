@@ -1,6 +1,7 @@
-package com.project.api_gateway.exception;
+package com.project.Api_Gateway.exception;
 
 import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.project.Api_Gateway.exception.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

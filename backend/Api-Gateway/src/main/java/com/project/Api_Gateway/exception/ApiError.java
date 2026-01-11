@@ -1,4 +1,4 @@
-package com.project.api_gateway.exception;
+package com.project.Api_Gateway.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

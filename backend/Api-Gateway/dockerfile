@@ -14,9 +14,3 @@ COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","app.jar"]
-
-curl http://54.226.181.154:5000
-curl http://54.226.181.154:5000/health
-
-curl http://54.226.181.154:8080
-curl http://54.226.181.154:8080/health

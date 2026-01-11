@@ -1,9 +1,9 @@
-package com.project.api_gateway.filters;
+package com.project.Api_Gateway.filters;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.project.api_gateway.service.JwtService;
+import com.project.Api_Gateway.service.JwtService;
 import lombok.AllArgsConstructor;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
